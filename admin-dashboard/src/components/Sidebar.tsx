@@ -11,6 +11,7 @@ const navItems = [
   { label: "Users", href: "/users", icon: "👥" },
   { label: "Rooms", href: "/rooms", icon: "🏠" },
   { label: "Notifications", href: "/notifications", icon: "🔔" },
+  { label: "Settings", href: "/settings", icon: "⚙️" },
 ];
 
 export default function Sidebar() {

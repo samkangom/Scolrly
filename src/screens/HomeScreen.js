@@ -83,6 +83,33 @@ export default function HomeScreen({ navigation }) {
             <ProgressBar percent={ch.accuracy} />
           </Card>
         ))}
+
+        {/* Quick Access */}
+        <SectionHeader eyebrow="QUICK ACCESS" title="Jump In" style={{ marginTop: Spacing.lg }} />
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('Rooms', { screen: 'DoubtDrop' })}
+            style={{ flex: 1 }}
+          >
+            <Card style={{ backgroundColor: colors.orange + '14', borderColor: colors.orange + '30', alignItems: 'center', paddingVertical: Spacing.xl }}>
+              <Text style={{ fontSize: 28, marginBottom: Spacing.sm }}>&#10067;</Text>
+              <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>Doubt Drop</Text>
+              <Text style={[Typography.small, { color: colors.textSecondary, marginTop: Spacing.xs }]}>Ask anything</Text>
+            </Card>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('PracticeTab', { screen: 'ConceptLibrary' })}
+            style={{ flex: 1 }}
+          >
+            <Card style={{ backgroundColor: colors.purple + '14', borderColor: colors.purple + '30', alignItems: 'center', paddingVertical: Spacing.xl }}>
+              <Text style={{ fontSize: 28, marginBottom: Spacing.sm }}>&#128218;</Text>
+              <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>Concept Library</Text>
+              <Text style={[Typography.small, { color: colors.textSecondary, marginTop: Spacing.xs }]}>Browse cards</Text>
+            </Card>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

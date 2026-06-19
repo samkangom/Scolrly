@@ -40,6 +40,11 @@ const stats = [
 
 export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredUsers = sampleUsers.filter((u) =>
+    u.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const columns = [
     { key: "name", label: "Name", render: (row: Record<string, unknown>) => { const r = row as unknown as User; return <button className="text-accent-blue hover:underline text-left" onClick={() => setSelectedUser(r)}>{r.name}</button>; } },
@@ -58,9 +63,22 @@ export default function UsersPage() {
         {stats.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
 
+      <div className="flex items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search users by name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 max-w-md bg-[#222222] border border-[#2A2A2A] text-[#FFFFFF] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#1DB954] placeholder-[#6B6B6B]"
+        />
+        <button className="bg-[#222222] border border-[#2A2A2A] text-[#9A9A9A] hover:text-[#FFFFFF] text-sm rounded-lg px-4 py-2.5 flex items-center gap-2 transition-colors">
+          <span>📥</span> Export CSV
+        </button>
+      </div>
+
       <div className="flex gap-6">
         <div className={selectedUser ? "flex-1" : "w-full"}>
-          <DataTable columns={columns} data={sampleUsers as unknown as Record<string, unknown>[]} keyField="id" />
+          <DataTable columns={columns} data={filteredUsers as unknown as Record<string, unknown>[]} keyField="id" />
         </div>
 
         {selectedUser && (

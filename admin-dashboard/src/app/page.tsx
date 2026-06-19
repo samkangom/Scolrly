@@ -40,22 +40,26 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* DAU/MAU Trend */}
         <div className="bg-card rounded-xl border border-border-dark p-5">
-          <h3 className="text-sm font-semibold text-text-secondary mb-4">DAU / MAU Trend (30 days)</h3>
-          <div className="h-48 flex items-end gap-1">
-            {Array.from({ length: 30 }, (_, i) => {
-              const h = 30 + Math.sin(i * 0.3) * 20 + Math.random() * 25;
-              return (
-                <div key={i} className="flex-1 flex flex-col justify-end">
-                  <div
-                    className="bg-brand/60 rounded-t-sm hover:bg-brand transition-colors"
-                    style={{ height: `${h}%` }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex justify-between text-xs text-text-muted mt-2">
-            <span>May 20</span><span>Jun 19</span>
+          <h3 className="text-sm font-semibold text-text-secondary mb-4">DAU / MAU Trend (Last 7 Days)</h3>
+          <div className="h-48 flex items-end gap-3">
+            {[
+              { day: "Mon", value: 2800 },
+              { day: "Tue", value: 3100 },
+              { day: "Wed", value: 2950 },
+              { day: "Thu", value: 3200 },
+              { day: "Fri", value: 3421 },
+              { day: "Sat", value: 3350 },
+              { day: "Sun", value: 3500 },
+            ].map((d) => (
+              <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group">
+                <span className="text-[10px] text-[#9A9A9A] mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{d.value.toLocaleString()}</span>
+                <div
+                  className="w-full bg-[#1DB954]/60 rounded-t-md hover:bg-[#1DB954] transition-colors"
+                  style={{ height: `${(d.value / 3500) * 100}%` }}
+                />
+                <span className="text-[10px] text-[#6B6B6B] mt-2">{d.day}</span>
+              </div>
+            ))}
           </div>
         </div>
 
