@@ -1,22 +1,22 @@
 "use client";
 
-interface Column<T> {
+interface Column {
   key: string;
   label: string;
-  render?: (row: T) => React.ReactNode;
+  render?: (row: Record<string, unknown>) => React.ReactNode;
 }
 
-interface DataTableProps<T> {
-  columns: Column<T>[];
-  data: T[];
+interface DataTableProps {
+  columns: Column[];
+  data: Record<string, unknown>[];
   keyField: string;
 }
 
-export default function DataTable<T extends Record<string, unknown>>({
+export default function DataTable({
   columns,
   data,
   keyField,
-}: DataTableProps<T>) {
+}: DataTableProps) {
   return (
     <div className="overflow-x-auto rounded-xl border border-border-dark">
       <table className="w-full text-sm">
