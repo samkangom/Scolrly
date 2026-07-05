@@ -1,116 +1,148 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useTheme, Typography, Spacing, Radius } from '../theme';
-import { Card, SectionHeader, ProgressBar, Eyebrow } from '../components/common';
-import { USER, STATS, DAILY_MISSIONS, CHAPTERS } from '../data';
-import { useCountdown } from '../hooks/useCountdown';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { useTheme } from '../theme';
+import { Spacing, Radius, Typography } from '../theme/tokens';
+import {
+  Screen, Txt, Eyebrow, Card, GreenCard, Avatar, SectionHeader,
+  CountdownBox, MissionCard, ScorePill, ProgressBar, IconBox, Skeleton,
+} from '../components/common';
+import { useApp } from '../context/AppContext';
+import { STATS, DAILY_MISSIONS, SUBJECTS, QUESTIONS } from '../data';
+import { Haptic } from '../utils/haptics';
 
-const MISSION_COLORS = { fix: '#FF6B35', revise: '#A855F7', maintain: '#1DB954' };
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'GOOD MORNING';
+  if (h < 17) return 'GOOD AFTERNOON';
+  return 'GOOD EVENING';
+}
 
 export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
-  const countdown = useCountdown(USER.examDate);
-  const weakChapters = [...CHAPTERS].sort((a, b) => a.accuracy - b.accuracy).slice(0, 3);
+  const { profile, streak } = useApp();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pyqRevealed, setPyqRevealed] = useState(false);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 650);
+    return () => clearTimeout(t);
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    Haptic.light();
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
+
+  const firstName = profile.name.split(' ')[0];
+  const pyq = QUESTIONS[2];
+  const subjectAcc = { biology: 68, physics: 54, chemistry: 61 };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: Spacing.base, paddingBottom: 40 }}>
+    <Screen>
+      <ScrollView
+        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxxl }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.green} />}
+      >
         {/* Header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg }}>
-          <View>
-            <Text style={[Typography.caption, { color: colors.textSecondary }]}>Welcome back</Text>
-            <Text style={[Typography.h1, { color: colors.textPrimary }]}>Hello, {USER.name.split(' ')[0]}</Text>
-          </View>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('Settings')} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border }}>
-            <Text style={{ fontSize: 18, color: colors.textSecondary }}>&#9881;</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.xl }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} hitSlop={8}>
+            <Text style={{ fontSize: 22 }}>⚙️</Text>
           </TouchableOpacity>
+          <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 20, letterSpacing: -0.5 }}>scolrly</Text>
+          <Avatar initials={profile.initials} color="green" size={38} />
         </View>
 
-        {/* Countdown */}
-        <Card style={{ marginBottom: Spacing.base, backgroundColor: colors.green + '12', borderColor: colors.greenBorder }}>
-          <Eyebrow text="NEET 2026 COUNTDOWN" style={{ marginBottom: Spacing.sm }} />
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Text style={[Typography.hero, { color: colors.green }]}>{countdown.days}</Text>
-            <Text style={[Typography.body, { color: colors.textSecondary, marginLeft: Spacing.xs }]}>days</Text>
-            <Text style={[Typography.h2, { color: colors.green, marginLeft: Spacing.base }]}>{countdown.hours}h {countdown.minutes}m</Text>
+        {/* Greeting */}
+        <Eyebrow label={`${greeting()}, ${firstName.toUpperCase()}`} />
+        <Txt variant="h1" style={{ marginTop: 6 }}>Ready to{'\n'}study smarter?</Txt>
+        <Txt variant="body" color={colors.textSecondary} style={{ marginTop: 6 }}>
+          {STATS.daysToExam} days to NEET {profile.targetYear} · 🔥 {streak} day streak
+        </Txt>
+
+        {/* Countdown strip */}
+        <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.lg }}>
+          <CountdownBox value={STATS.daysToExam} label="DAYS" />
+          <CountdownBox value={STATS.estimatedScore} label="SCORE" />
+          <CountdownBox value="41K" label="AIR" />
+        </View>
+
+        {/* Today's mission */}
+        <SectionHeader title="Today's mission" action="See all" onAction={() => navigation.navigate('Practice')} style={{ marginTop: Spacing.xl }} />
+        {loading ? (
+          <View style={{ gap: Spacing.sm }}>
+            <Skeleton height={64} /><Skeleton height={64} /><Skeleton height={64} />
           </View>
-          <Text style={[Typography.small, { color: colors.textMuted, marginTop: Spacing.xs }]}>
-            {USER.streak} day streak
-          </Text>
+        ) : (
+          <View style={{ gap: Spacing.sm }}>
+            {DAILY_MISSIONS.map((m) => (
+              <MissionCard key={m.title} mission={m}
+                onPress={() => navigation.navigate('Practice', { screen: 'ChapterDetail', params: { chapterId: m.chapter } })} />
+            ))}
+          </View>
+        )}
+
+        {/* Score pill */}
+        <ScorePill
+          score={STATS.estimatedScore} max={STATS.maxScore} rank={STATS.estimatedRank}
+          delta={`↑ from ${(STATS.prevRank / 1000).toFixed(0)},000 · ${STATS.rankImprovedIn} ago`}
+          style={{ marginTop: Spacing.lg }}
+        />
+
+        {/* Subject accuracy */}
+        <SectionHeader title="Subject accuracy" style={{ marginTop: Spacing.xl }} />
+        <Card style={{ flexDirection: 'row', gap: Spacing.md }}>
+          {SUBJECTS.map((s) => {
+            const val = subjectAcc[s.id];
+            const c = s.colorKey === 'green' ? colors.green : s.colorKey === 'blue' ? colors.blue : colors.purple;
+            return (
+              <View key={s.id} style={{ flex: 1, alignItems: 'center' }}>
+                <Text style={{ color: c, fontFamily: 'Inter_800ExtraBold', fontWeight: '800', fontSize: 20 }}>{val}%</Text>
+                <ProgressBar value={val} color={c} height={4} style={{ width: '100%', marginVertical: 8 }} />
+                <Txt variant="caption" color={colors.textMuted}>{s.name}</Txt>
+              </View>
+            );
+          })}
         </Card>
 
-        {/* Stats row */}
-        <View style={{ flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.xl }}>
+        {/* Quick access */}
+        <SectionHeader title="Quick access" style={{ marginTop: Spacing.xl }} />
+        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
           {[
-            { label: 'Score', value: STATS.estimatedScore + '/' + STATS.totalMarks },
-            { label: 'Rank', value: '#' + STATS.estimatedRank.toLocaleString() },
-            { label: 'Accuracy', value: STATS.accuracy + '%' },
-          ].map((s) => (
-            <Card key={s.label} style={{ flex: 1, alignItems: 'center', padding: Spacing.md }}>
-              <Text style={[Typography.small, { color: colors.textMuted, marginBottom: Spacing.xs }]}>{s.label}</Text>
-              <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>{s.value}</Text>
-            </Card>
+            { icon: '📝', label: 'Full Mock', color: 'orange', go: () => navigation.navigate('Mocks') },
+            { icon: '📚', label: 'Practice', color: 'green', go: () => navigation.navigate('Practice') },
+            { icon: '👥', label: 'Study Room', color: 'purple', go: () => navigation.navigate('Rooms') },
+          ].map((q) => (
+            <TouchableOpacity key={q.label} activeOpacity={0.85} onPress={() => { Haptic.light(); q.go(); }} style={{ flex: 1 }}>
+              <Card style={{ alignItems: 'center', paddingVertical: Spacing.lg }}>
+                <IconBox color={q.color}><Text style={{ fontSize: 20 }}>{q.icon}</Text></IconBox>
+                <Txt variant="h5" style={{ marginTop: Spacing.sm, textAlign: 'center' }}>{q.label}</Txt>
+              </Card>
+            </TouchableOpacity>
           ))}
         </View>
 
-        {/* Daily Missions */}
-        <SectionHeader eyebrow="TODAY'S MISSION" title="Your Daily Tasks" />
-        {DAILY_MISSIONS.map((m) => (
-          <TouchableOpacity
-            key={m.id}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('PracticeTab', { screen: 'Practice' })}
-          >
-            <Card style={{ marginBottom: Spacing.sm, flexDirection: 'row', overflow: 'hidden' }}>
-              <View style={{ width: 4, backgroundColor: MISSION_COLORS[m.type], borderRadius: 2, marginRight: Spacing.md, alignSelf: 'stretch' }} />
-              <View style={{ flex: 1 }}>
-                <Text style={[Typography.caption, { color: MISSION_COLORS[m.type], marginBottom: 2, textTransform: 'uppercase', fontWeight: '700', fontSize: 10 }]}>{m.type}</Text>
-                <Text style={[Typography.bodyBold, { color: colors.textPrimary, marginBottom: 2 }]}>{m.title}</Text>
-                <Text style={[Typography.small, { color: colors.textMuted }]}>{m.subject} · {m.questions} questions</Text>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        ))}
-
-        {/* Weakest Chapters */}
-        <SectionHeader eyebrow="NEEDS ATTENTION" title="Weakest Chapters" style={{ marginTop: Spacing.lg }} />
-        {weakChapters.map((ch) => (
-          <Card key={ch.id} style={{ marginBottom: Spacing.sm }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
-              <Text style={[Typography.bodyBold, { color: colors.textPrimary, flex: 1 }]}>{ch.name}</Text>
-              <Text style={[Typography.caption, { color: ch.accuracy < 55 ? colors.orange : colors.purple }]}>{ch.accuracy}%</Text>
+        {/* Daily PYQ */}
+        <SectionHeader title="Daily PYQ" style={{ marginTop: Spacing.xl }} />
+        <Card onPress={() => { setPyqRevealed(true); Haptic.light(); }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.sm }}>
+            <Eyebrow label="NEET 2023 · CHEMISTRY" />
+            <Txt variant="caption" color={colors.textMuted}>PYQ of the day</Txt>
+          </View>
+          <Txt variant="h5" style={{ lineHeight: 20 }}>{pyq.text}</Txt>
+          {pyqRevealed ? (
+            <View style={{ marginTop: Spacing.md, backgroundColor: colors.greenGlow, borderRadius: Radius.sm, padding: Spacing.md, borderWidth: 1, borderColor: colors.greenBorder }}>
+              <Eyebrow label="ANSWER" />
+              <Txt variant="body" color={colors.green} style={{ marginTop: 4 }}>
+                {pyq.options.find((o) => o.id === pyq.correct).text} — {pyq.explanation}
+              </Txt>
             </View>
-            <ProgressBar percent={ch.accuracy} />
-          </Card>
-        ))}
-
-        {/* Quick Access */}
-        <SectionHeader eyebrow="QUICK ACCESS" title="Jump In" style={{ marginTop: Spacing.lg }} />
-        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('Rooms', { screen: 'DoubtDrop' })}
-            style={{ flex: 1 }}
-          >
-            <Card style={{ backgroundColor: colors.orange + '14', borderColor: colors.orange + '30', alignItems: 'center', paddingVertical: Spacing.xl }}>
-              <Text style={{ fontSize: 28, marginBottom: Spacing.sm }}>&#10067;</Text>
-              <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>Doubt Drop</Text>
-              <Text style={[Typography.small, { color: colors.textSecondary, marginTop: Spacing.xs }]}>Ask anything</Text>
-            </Card>
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('PracticeTab', { screen: 'ConceptLibrary' })}
-            style={{ flex: 1 }}
-          >
-            <Card style={{ backgroundColor: colors.purple + '14', borderColor: colors.purple + '30', alignItems: 'center', paddingVertical: Spacing.xl }}>
-              <Text style={{ fontSize: 28, marginBottom: Spacing.sm }}>&#128218;</Text>
-              <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>Concept Library</Text>
-              <Text style={[Typography.small, { color: colors.textSecondary, marginTop: Spacing.xs }]}>Browse cards</Text>
-            </Card>
-          </TouchableOpacity>
-        </View>
+          ) : (
+            <Txt variant="bodySmall" color={colors.textMuted} style={{ marginTop: Spacing.sm }}>Tap to answer</Txt>
+          )}
+        </Card>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

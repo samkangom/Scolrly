@@ -1,71 +1,98 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useTheme, Typography, Spacing, Radius } from '../theme';
-import { Card, Btn, Badge, Divider } from '../components/common';
+import { View, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { useTheme } from '../theme';
+import { Spacing, Radius } from '../theme/tokens';
+import {
+  Screen, Txt, Eyebrow, Card, GreenCard, Btn, Badge,
+} from '../components/common';
 import { PLANS } from '../data';
+import { Haptic } from '../utils/haptics';
+
+function PlanCard({ plan, onSelect }) {
+  const { colors } = useTheme();
+  const isPro = plan.popular;
+  const Wrapper = isPro ? GreenCard : Card;
+  return (
+    <Wrapper style={{ marginBottom: Spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Txt variant="h4">{plan.name}</Txt>
+        {plan.popular ? <Badge label="POPULAR" color="green" /> : null}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: Spacing.sm }}>
+        <Text style={{ color: colors.textPrimary, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 30, letterSpacing: -1 }}>{plan.price}</Text>
+        {plan.period ? <Txt variant="body" color={colors.textMuted} style={{ marginLeft: 4 }}>{plan.period}</Txt> : null}
+      </View>
+      {plan.saving ? <Badge label={plan.saving} color="green" style={{ marginTop: Spacing.sm }} /> : null}
+
+      <View style={{ marginTop: Spacing.md, gap: 8 }}>
+        {plan.features.map((f) => (
+          <View key={f} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ color: colors.green, marginRight: 8, fontFamily: 'Inter_800ExtraBold', fontWeight: '800' }}>✓</Text>
+            <Txt variant="body" color={colors.textSecondary} style={{ flex: 1 }}>{f}</Txt>
+          </View>
+        ))}
+      </View>
+
+      <View style={{ marginTop: Spacing.lg }}>
+        <Btn label={plan.cta} variant={plan.id === 'free' ? 'ghost' : plan.id === 'pro_yearly' ? 'outline' : 'primary'} onPress={onSelect} />
+      </View>
+    </Wrapper>
+  );
+}
 
 export default function PaywallScreen({ navigation }) {
   const { colors } = useTheme();
-  const [yearly, setYearly] = useState(false);
+  const [billing, setBilling] = useState('yearly');
 
-  const visiblePlans = yearly
-    ? PLANS.filter((p) => p.id !== 'pro_monthly')
-    : PLANS.filter((p) => p.id !== 'pro_yearly');
+  // Show Free + the selected paid tier emphasised; keep all three visible.
+  const ordered = billing === 'yearly'
+    ? [PLANS[2], PLANS[1], PLANS[0]]
+    : [PLANS[1], PLANS[2], PLANS[0]];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: Spacing.base, paddingBottom: 120 }}>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.goBack()} style={{ marginBottom: Spacing.md }}>
-          <Text style={[Typography.body, { color: colors.green }]}>{'< Back'}</Text>
+    <Screen edges={['top', 'bottom']}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: Spacing.lg }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={8}>
+          <Text style={{ color: colors.textSecondary, fontSize: 24 }}>×</Text>
         </TouchableOpacity>
+        <Txt variant="h2">Choose your plan</Txt>
+        <View style={{ width: 24 }} />
+      </View>
 
-        <Text style={[Typography.h1, { color: colors.textPrimary, marginBottom: Spacing.xs }]}>Upgrade to Pro</Text>
-        <Text style={[Typography.body, { color: colors.textSecondary, marginBottom: Spacing.xl }]}>Unlock AI-powered diagnostics and unlimited practice.</Text>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxxl }}>
+        <Txt variant="body" color={colors.green} style={{ textAlign: 'center', marginBottom: Spacing.lg }}>
+          7-day free trial on all Pro plans
+        </Txt>
 
-        {/* Toggle */}
-        <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderRadius: Radius.pill, padding: 4, marginBottom: Spacing.xl, borderWidth: 1, borderColor: colors.border }}>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => setYearly(false)} style={{ flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.pill, backgroundColor: !yearly ? colors.green : 'transparent', alignItems: 'center' }}>
-            <Text style={[Typography.caption, { color: !yearly ? '#FFFFFF' : colors.textSecondary, fontWeight: '700' }]}>Monthly</Text>
-          </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => setYearly(true)} style={{ flex: 1, paddingVertical: Spacing.sm, borderRadius: Radius.pill, backgroundColor: yearly ? colors.green : 'transparent', alignItems: 'center' }}>
-            <Text style={[Typography.caption, { color: yearly ? '#FFFFFF' : colors.textSecondary, fontWeight: '700' }]}>Yearly (Save 33%)</Text>
-          </TouchableOpacity>
+        {/* Monthly / Yearly toggle */}
+        <View style={{ flexDirection: 'row', backgroundColor: colors.bgCard, borderRadius: Radius.pill, padding: 4, marginBottom: Spacing.xl }}>
+          {[{ id: 'monthly', label: 'Monthly' }, { id: 'yearly', label: 'Yearly' }].map((b) => {
+            const on = billing === b.id;
+            return (
+              <TouchableOpacity key={b.id} activeOpacity={0.85} onPress={() => { Haptic.light(); setBilling(b.id); }}
+                style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 10, borderRadius: Radius.pill, backgroundColor: on ? colors.green : 'transparent' }}>
+                <Text style={{ color: on ? '#0D0D0D' : colors.textSecondary, fontFamily: 'Inter_700Bold', fontWeight: '700', fontSize: 14 }}>{b.label}</Text>
+                {b.id === 'yearly' ? (
+                  <View style={{ marginLeft: 6, backgroundColor: on ? '#0D0D0D' : colors.greenGlow, borderRadius: Radius.pill, paddingHorizontal: 6, paddingVertical: 2 }}>
+                    <Text style={{ color: on ? colors.green : colors.green, fontFamily: 'Inter_800ExtraBold', fontWeight: '800', fontSize: 9 }}>Save 44%</Text>
+                  </View>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Plan Cards */}
-        {visiblePlans.map((plan) => (
-          <Card key={plan.id} style={{ marginBottom: Spacing.base, borderColor: plan.popular ? colors.green : colors.border, borderWidth: plan.popular ? 2 : 1 }}>
-            {plan.popular && <Badge label="POPULAR" color={colors.green} style={{ marginBottom: Spacing.sm }} />}
-            <Text style={[Typography.h2, { color: colors.textPrimary, marginBottom: Spacing.xs }]}>{plan.name}</Text>
-            {plan.price > 0 ? (
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: Spacing.md }}>
-                <Text style={[{ fontSize: 32, fontWeight: '800', color: colors.green }]}>&#8377;{plan.price}</Text>
-                {plan.period && <Text style={[Typography.body, { color: colors.textMuted, marginLeft: Spacing.xs }]}>/{plan.period}</Text>}
-              </View>
-            ) : (
-              <Text style={[Typography.h2, { color: colors.textMuted, marginBottom: Spacing.md }]}>Free</Text>
-            )}
-            {plan.features.map((f, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm }}>
-                <Text style={{ color: colors.green, marginRight: Spacing.sm, fontSize: 14 }}>&#10003;</Text>
-                <Text style={[Typography.body, { color: colors.textSecondary }]}>{f}</Text>
-              </View>
-            ))}
-            {plan.limitations && plan.limitations.map((l, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm }}>
-                <Text style={{ color: colors.textMuted, marginRight: Spacing.sm, fontSize: 14 }}>&#10007;</Text>
-                <Text style={[Typography.body, { color: colors.textMuted }]}>{l}</Text>
-              </View>
-            ))}
-          </Card>
+        {ordered.map((plan) => (
+          <PlanCard key={plan.id} plan={plan} onSelect={() => { Haptic.success(); navigation.goBack(); }} />
         ))}
-      </ScrollView>
 
-      {/* Sticky CTA */}
-      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.bg, borderTopWidth: 1, borderTopColor: colors.border, padding: Spacing.base }}>
-        <Btn title="Start 7-day free trial" onPress={() => {}} />
-        <Text style={[Typography.small, { color: colors.textMuted, textAlign: 'center', marginTop: Spacing.sm }]}>Cancel anytime. No questions asked.</Text>
-      </View>
-    </SafeAreaView>
+        <Txt variant="bodySmall" color={colors.textMuted} style={{ textAlign: 'center', marginTop: Spacing.md }}>
+          No charge during trial. Cancel anytime.
+        </Txt>
+        <TouchableOpacity style={{ alignItems: 'center', marginTop: Spacing.sm }}>
+          <Text style={{ color: colors.green, fontFamily: 'Inter_700Bold', fontWeight: '700', fontSize: 13 }}>Restore purchase</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </Screen>
   );
 }

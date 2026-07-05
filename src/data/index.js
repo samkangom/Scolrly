@@ -1,113 +1,217 @@
+// All Scolrly content lives here as static placeholder data (no backend yet).
+
 export const USER = {
-  name: 'Arjun Sharma',
-  avatar: null,
-  class: 'Class 12',
+  name: 'Riya Sharma',
+  initials: 'RS',
   targetYear: 2026,
-  examDate: '2026-05-03',
-  streak: 14,
-  coaching: 'Allen Kota',
-  subscription: 'free',
-  joinDate: '2025-01-15',
+  status: 'Class 12',
+  coaching: 'Aakash',
+  medium: 'English',
+  streakDays: 14,
+  examDate: '2026-05-04',
 };
 
 export const STATS = {
-  estimatedScore: 542,
-  totalMarks: 720,
-  percentile: 89.2,
-  estimatedRank: 18420,
-  qualifyingColleges: [
-    'AIIMS Delhi',
-    'MAMC Delhi',
-    'KGMU Lucknow',
-    'BHU Varanasi',
-    'JIPMER Puducherry',
-  ],
-  totalQuestionsAnswered: 2847,
-  accuracy: 68.5,
+  estimatedScore: 541,
+  maxScore: 720,
+  estimatedRank: 41240,
+  prevRank: 65000,
+  rankImprovedIn: '6 weeks',
+  daysToExam: 187,
+  qualifyingColleges: ['MAMC', 'AFMC', 'GMC Jammu'],
+  accuracy: 68,
+  questionsAnswered: 2847,
   hoursStudied: 186,
-  mocksCompleted: 12,
+  mocksCompleted: 6,
 };
 
-export const DAILY_MISSIONS = [
-  {
-    id: 1,
-    type: 'fix',
-    chapter: 'Human Physiology',
-    title: 'Fix 8 weak concepts in Digestion & Absorption',
-    subject: 'Biology',
-    questions: 8,
-  },
-  {
-    id: 2,
-    type: 'revise',
-    chapter: 'Chemical Bonding',
-    title: 'Revise molecular orbital theory — forgetting curve alert',
-    subject: 'Chemistry',
-    questions: 12,
-  },
-  {
-    id: 3,
-    type: 'maintain',
-    chapter: 'Laws of Motion',
-    title: "Maintain your streak in Newton's Laws",
-    subject: 'Physics',
-    questions: 6,
-  },
-];
-
 export const SUBJECTS = [
-  { id: 'bio', name: 'Biology', color: '#1DB954', chapters: 38, icon: 'leaf' },
-  { id: 'chem', name: 'Chemistry', color: '#60A5FA', chapters: 30, icon: 'flask' },
-  { id: 'phy', name: 'Physics', color: '#A855F7', chapters: 29, icon: 'atom' },
+  { id: 'biology', name: 'Biology', colorKey: 'green' },
+  { id: 'physics', name: 'Physics', colorKey: 'blue' },
+  { id: 'chemistry', name: 'Chemistry', colorKey: 'purple' },
 ];
 
+// ── Chapters ──────────────────────────────────────────────────────────────
+// status: 'fix' | 'revise' | 'strong'
 export const CHAPTERS = [
-  { id: 1, name: 'Human Physiology', subject: 'bio', accuracy: 42, status: 'fix', pyqCount: 28, totalQuestions: 45, conceptCards: 6 },
-  { id: 2, name: 'Genetics & Evolution', subject: 'bio', accuracy: 55, status: 'revise', pyqCount: 35, totalQuestions: 52, conceptCards: 8 },
-  { id: 3, name: 'Cell Biology', subject: 'bio', accuracy: 78, status: 'strong', pyqCount: 22, totalQuestions: 38, conceptCards: 5 },
-  { id: 4, name: 'Plant Physiology', subject: 'bio', accuracy: 61, status: 'revise', pyqCount: 18, totalQuestions: 30, conceptCards: 4 },
-  { id: 5, name: 'Ecology', subject: 'bio', accuracy: 85, status: 'strong', pyqCount: 15, totalQuestions: 25, conceptCards: 3 },
-  { id: 6, name: 'Chemical Bonding', subject: 'chem', accuracy: 38, status: 'fix', pyqCount: 24, totalQuestions: 40, conceptCards: 7 },
-  { id: 7, name: 'Organic Chemistry', subject: 'chem', accuracy: 52, status: 'revise', pyqCount: 32, totalQuestions: 48, conceptCards: 9 },
-  { id: 8, name: 'Thermodynamics', subject: 'chem', accuracy: 71, status: 'revise', pyqCount: 20, totalQuestions: 35, conceptCards: 5 },
-  { id: 9, name: 'Coordination Compounds', subject: 'chem', accuracy: 45, status: 'fix', pyqCount: 16, totalQuestions: 28, conceptCards: 4 },
-  { id: 10, name: 'Electrochemistry', subject: 'chem', accuracy: 80, status: 'strong', pyqCount: 14, totalQuestions: 22, conceptCards: 3 },
-  { id: 11, name: 'Laws of Motion', subject: 'phy', accuracy: 88, status: 'strong', pyqCount: 26, totalQuestions: 42, conceptCards: 6 },
-  { id: 12, name: 'Electrostatics', subject: 'phy', accuracy: 35, status: 'fix', pyqCount: 22, totalQuestions: 38, conceptCards: 5 },
-  { id: 13, name: 'Optics', subject: 'phy', accuracy: 62, status: 'revise', pyqCount: 28, totalQuestions: 44, conceptCards: 7 },
-  { id: 14, name: 'Modern Physics', subject: 'phy', accuracy: 48, status: 'fix', pyqCount: 20, totalQuestions: 32, conceptCards: 4 },
-  { id: 15, name: 'Magnetism', subject: 'phy', accuracy: 73, status: 'revise', pyqCount: 18, totalQuestions: 30, conceptCards: 5 },
+  // Biology
+  { id: 'bio-1', subject: 'biology', name: 'Human Physiology', accuracy: 31, pyqCount: 24, status: 'fix', attempted: 47 },
+  { id: 'bio-2', subject: 'biology', name: 'Cell Structure & Division', accuracy: 47, pyqCount: 18, status: 'fix', attempted: 38 },
+  { id: 'bio-3', subject: 'biology', name: 'Plant Physiology', accuracy: 58, pyqCount: 16, status: 'revise', attempted: 30 },
+  { id: 'bio-4', subject: 'biology', name: 'Reproduction', accuracy: 64, pyqCount: 20, status: 'revise', attempted: 42 },
+  { id: 'bio-5', subject: 'biology', name: 'Genetics & Evolution', accuracy: 81, pyqCount: 28, status: 'strong', attempted: 52 },
+  { id: 'bio-6', subject: 'biology', name: 'Ecology & Environment', accuracy: 85, pyqCount: 22, status: 'strong', attempted: 40 },
+  { id: 'bio-7', subject: 'biology', name: 'Biomolecules', accuracy: 76, pyqCount: 14, status: 'strong', attempted: 26 },
+  // Physics
+  { id: 'phy-1', subject: 'physics', name: 'Thermodynamics', accuracy: 38, pyqCount: 20, status: 'fix', attempted: 35 },
+  { id: 'phy-2', subject: 'physics', name: 'Electrostatics', accuracy: 35, pyqCount: 22, status: 'fix', attempted: 38 },
+  { id: 'phy-3', subject: 'physics', name: 'Optics', accuracy: 58, pyqCount: 28, status: 'revise', attempted: 44 },
+  { id: 'phy-4', subject: 'physics', name: 'Modern Physics', accuracy: 62, pyqCount: 18, status: 'revise', attempted: 32 },
+  { id: 'phy-5', subject: 'physics', name: 'Current Electricity', accuracy: 71, pyqCount: 24, status: 'revise', attempted: 40 },
+  { id: 'phy-6', subject: 'physics', name: 'Mechanics', accuracy: 72, pyqCount: 30, status: 'strong', attempted: 55 },
+  { id: 'phy-7', subject: 'physics', name: 'Magnetism', accuracy: 79, pyqCount: 16, status: 'strong', attempted: 28 },
+  // Chemistry
+  { id: 'chem-1', subject: 'chemistry', name: 'Chemical Bonding', accuracy: 38, pyqCount: 24, status: 'fix', attempted: 40 },
+  { id: 'chem-2', subject: 'chemistry', name: 'Coordination Compounds', accuracy: 45, pyqCount: 16, status: 'fix', attempted: 28 },
+  { id: 'chem-3', subject: 'chemistry', name: 'Organic Chemistry', accuracy: 52, pyqCount: 32, status: 'revise', attempted: 48 },
+  { id: 'chem-4', subject: 'chemistry', name: 'Thermodynamics (Chem)', accuracy: 61, pyqCount: 18, status: 'revise', attempted: 34 },
+  { id: 'chem-5', subject: 'chemistry', name: 'Equilibrium', accuracy: 66, pyqCount: 20, status: 'revise', attempted: 36 },
+  { id: 'chem-6', subject: 'chemistry', name: 'Electrochemistry', accuracy: 80, pyqCount: 14, status: 'strong', attempted: 22 },
+  { id: 'chem-7', subject: 'chemistry', name: 'Periodic Table', accuracy: 84, pyqCount: 12, status: 'strong', attempted: 20 },
 ];
 
+// ── Questions (real-style NEET PYQs) ──────────────────────────────────────
 export const QUESTIONS = [
-  { id: 1, chapterId: 1, text: 'Which enzyme is responsible for the digestion of proteins in the stomach?', options: ['Trypsin', 'Pepsin', 'Lipase', 'Amylase'], correct: 1, explanation: 'Pepsin is the chief digestive enzyme in the stomach that breaks down proteins into smaller peptides. It is secreted as pepsinogen by chief cells and activated by HCl.', difficulty: 'medium', year: 2023 },
-  { id: 2, chapterId: 1, text: 'The absorption of digested food primarily occurs in which part of the alimentary canal?', options: ['Stomach', 'Duodenum', 'Jejunum and Ileum', 'Large Intestine'], correct: 2, explanation: 'The jejunum and ileum of the small intestine are the primary sites of nutrient absorption due to the presence of villi and microvilli that increase the surface area.', difficulty: 'easy', year: 2022 },
-  { id: 3, chapterId: 6, text: 'According to MOT, the bond order of O₂ molecule is:', options: ['1', '2', '3', '1.5'], correct: 1, explanation: 'The bond order of O₂ according to Molecular Orbital Theory is 2. Bond order = (bonding electrons - antibonding electrons) / 2 = (10 - 6) / 2 = 2.', difficulty: 'medium', year: 2023 },
-  { id: 4, chapterId: 11, text: 'A body of mass 5 kg is acted upon by two perpendicular forces 8N and 6N. The magnitude of acceleration is:', options: ['2 m/s²', '1.4 m/s²', '1 m/s²', '0.5 m/s²'], correct: 0, explanation: 'Net force = √(8² + 6²) = √(64 + 36) = √100 = 10N. Acceleration = F/m = 10/5 = 2 m/s².', difficulty: 'easy', year: 2021 },
-  { id: 5, chapterId: 2, text: "In Mendel's dihybrid cross, the ratio of F2 generation is:", options: ['3:1', '1:2:1', '9:3:3:1', '1:1:1:1'], correct: 2, explanation: 'In a dihybrid cross, the F2 generation shows a phenotypic ratio of 9:3:3:1. This is because two genes assort independently during gamete formation.', difficulty: 'easy', year: 2022 },
-  { id: 6, chapterId: 12, text: 'Electric field intensity due to a uniformly charged sphere at a point inside the sphere is:', options: ['Maximum', 'Zero', 'Same as on surface', 'Minimum but not zero'], correct: 1, explanation: "Inside a uniformly charged conducting sphere, the electric field is zero. This is a direct consequence of Gauss's law.", difficulty: 'medium', year: 2023 },
-  { id: 7, chapterId: 7, text: 'Which of the following is the most stable carbocation?', options: ['CH₃⁺', '(CH₃)₂CH⁺', '(CH₃)₃C⁺', 'C₂H₅⁺'], correct: 2, explanation: 'Tertiary carbocations are most stable due to hyperconjugation and +I effect of three methyl groups. Stability order: 3° > 2° > 1° > CH₃⁺.', difficulty: 'easy', year: 2021 },
-  { id: 8, chapterId: 13, text: 'The focal length of a convex lens is 20 cm. Its power is:', options: ['5 D', '+5 D', '-5 D', '0.05 D'], correct: 1, explanation: 'Power = 1/focal length (in meters) = 1/0.20 = +5 D. Convex lens always has positive power.', difficulty: 'easy', year: 2022 },
-  { id: 9, chapterId: 3, text: 'Which organelle is called the "powerhouse of the cell"?', options: ['Nucleus', 'Ribosome', 'Mitochondria', 'Golgi Apparatus'], correct: 2, explanation: 'Mitochondria are called the powerhouse of the cell because they produce ATP through oxidative phosphorylation.', difficulty: 'easy', year: 2020 },
-  { id: 10, chapterId: 14, text: 'The work function of a metal is 4 eV. The minimum wavelength of photon required for photoelectric emission is:', options: ['310 nm', '400 nm', '540 nm', '220 nm'], correct: 0, explanation: 'E = hc/λ. λ = hc/E = (6.63×10⁻³⁴ × 3×10⁸) / (4 × 1.6×10⁻¹⁹) = 310 nm approximately.', difficulty: 'hard', year: 2023 },
-  { id: 11, chapterId: 2, text: 'Which of the following is a sex-linked recessive disorder?', options: ['Sickle cell anaemia', 'Haemophilia', 'Phenylketonuria', 'Thalassemia'], correct: 1, explanation: 'Haemophilia is a sex-linked recessive disorder where the gene is located on the X chromosome. Affected males inherit the allele from carrier mothers.', difficulty: 'medium', year: 2022 },
-  { id: 12, chapterId: 4, text: 'The C4 pathway is also known as:', options: ['Calvin cycle', 'Hatch-Slack pathway', 'Krebs cycle', 'EMP pathway'], correct: 1, explanation: 'The C4 pathway (Hatch-Slack pathway) is a carbon fixation pathway where the first stable product is a 4-carbon compound (oxaloacetate).', difficulty: 'easy', year: 2021 },
-  { id: 13, chapterId: 7, text: 'Markovnikov\'s rule is applicable to:', options: ['Addition of HBr to propene', 'Addition of HBr to ethene', 'Addition of Br₂ to ethene', 'Elimination reactions'], correct: 0, explanation: 'Markovnikov\'s rule states that in addition of HX to unsymmetrical alkenes, the negative part adds to the carbon with fewer hydrogen atoms.', difficulty: 'medium', year: 2023 },
-  { id: 14, chapterId: 8, text: 'For an exothermic reaction, the enthalpy change (ΔH) is:', options: ['Positive', 'Negative', 'Zero', 'Cannot be determined'], correct: 1, explanation: 'In exothermic reactions, energy is released to the surroundings, so the enthalpy of products is less than reactants, making ΔH negative.', difficulty: 'easy', year: 2020 },
-  { id: 15, chapterId: 5, text: 'The pyramid of energy in an ecosystem is always:', options: ['Inverted', 'Upright', 'Spindle-shaped', 'Variable'], correct: 1, explanation: 'The pyramid of energy is always upright because energy decreases at each successive trophic level due to the second law of thermodynamics.', difficulty: 'medium', year: 2022 },
-  { id: 16, chapterId: 9, text: 'The IUPAC name of [Co(NH₃)₅Cl]Cl₂ is:', options: ['Pentaamminechloridocobalt(III) chloride', 'Pentaamminechloridocobalt(II) chloride', 'Chloropentaamminecobalt(III) chloride', 'Pentachloroamminecobalt(III) chloride'], correct: 0, explanation: 'In IUPAC nomenclature, ligands are listed alphabetically, the metal is named with oxidation state in Roman numerals. Co is +3 here.', difficulty: 'hard', year: 2023 },
-  { id: 17, chapterId: 13, text: 'Total internal reflection occurs when light travels from:', options: ['Rarer to denser medium', 'Denser to rarer medium', 'Any medium to vacuum', 'Vacuum to any medium'], correct: 1, explanation: 'Total internal reflection occurs when light travels from a denser medium to a rarer medium and the angle of incidence exceeds the critical angle.', difficulty: 'easy', year: 2021 },
-  { id: 18, chapterId: 14, text: 'The ratio of de Broglie wavelengths of a proton and an alpha particle of the same kinetic energy is:', options: ['1:1', '2:1', '1:2', '4:1'], correct: 1, explanation: 'λ = h/√(2mKE). Since mass of alpha particle is 4 times proton mass, λp/λα = √(mα/mp) = √4 = 2. So ratio is 2:1.', difficulty: 'hard', year: 2023 },
-  { id: 19, chapterId: 15, text: 'The magnetic field at the centre of a circular current loop of radius R carrying current I is:', options: ['μ₀I/R', 'μ₀I/2R', 'μ₀I/4R', '2μ₀I/R'], correct: 1, explanation: 'Using Biot-Savart law, the magnetic field at the centre of a circular loop is B = μ₀I/2R.', difficulty: 'medium', year: 2022 },
-  { id: 20, chapterId: 10, text: 'In an electrochemical cell, the cathode is:', options: ['Negatively charged', 'Positively charged', 'Neutral', 'Either positive or negative'], correct: 1, explanation: 'In an electrochemical (galvanic) cell, the cathode is the positive electrode where reduction takes place.', difficulty: 'easy', year: 2021 },
+  {
+    id: 'q1', chapter: 'bio-1', subject: 'biology', year: 2023, difficulty: 'Medium',
+    text: 'Which enzyme is responsible for the digestion of proteins in the stomach?',
+    options: [{ id: 'A', text: 'Trypsin' }, { id: 'B', text: 'Pepsin' }, { id: 'C', text: 'Lipase' }, { id: 'D', text: 'Amylase' }],
+    correct: 'B',
+    explanation: 'Pepsin is the chief protein-digesting enzyme in the stomach. It is secreted as inactive pepsinogen by chief cells and activated by HCl.',
+    pyqFrequency: 'Very High', tags: ['Digestion', 'Enzymes', 'NCERT'],
+  },
+  {
+    id: 'q2', chapter: 'bio-1', subject: 'biology', year: 2022, difficulty: 'Easy',
+    text: 'The absorption of digested food primarily occurs in which part of the alimentary canal?',
+    options: [{ id: 'A', text: 'Stomach' }, { id: 'B', text: 'Duodenum' }, { id: 'C', text: 'Jejunum and Ileum' }, { id: 'D', text: 'Large Intestine' }],
+    correct: 'C',
+    explanation: 'The jejunum and ileum are the primary absorption sites due to villi and microvilli that vastly increase surface area.',
+    pyqFrequency: 'High', tags: ['Absorption', 'Small Intestine'],
+  },
+  {
+    id: 'q3', chapter: 'chem-1', subject: 'chemistry', year: 2023, difficulty: 'Medium',
+    text: 'According to Molecular Orbital Theory, the bond order of the O₂ molecule is:',
+    options: [{ id: 'A', text: '1' }, { id: 'B', text: '2' }, { id: 'C', text: '3' }, { id: 'D', text: '1.5' }],
+    correct: 'B',
+    explanation: 'Bond order = (bonding − antibonding electrons)/2 = (10 − 6)/2 = 2. O₂ also has two unpaired electrons, explaining its paramagnetism.',
+    pyqFrequency: 'Very High', tags: ['MOT', 'Bond Order'],
+  },
+  {
+    id: 'q4', chapter: 'phy-6', subject: 'physics', year: 2021, difficulty: 'Easy',
+    text: 'A body of mass 5 kg is acted upon by two perpendicular forces 8 N and 6 N. The magnitude of the acceleration is:',
+    options: [{ id: 'A', text: '2 m/s²' }, { id: 'B', text: '1.4 m/s²' }, { id: 'C', text: '1 m/s²' }, { id: 'D', text: '0.5 m/s²' }],
+    correct: 'A',
+    explanation: 'Net force = √(8² + 6²) = √100 = 10 N. Acceleration = F/m = 10/5 = 2 m/s².',
+    pyqFrequency: 'High', tags: ['Newton', 'Vectors'],
+  },
+  {
+    id: 'q5', chapter: 'bio-5', subject: 'biology', year: 2022, difficulty: 'Easy',
+    text: "In Mendel's dihybrid cross, the phenotypic ratio of the F2 generation is:",
+    options: [{ id: 'A', text: '3:1' }, { id: 'B', text: '1:2:1' }, { id: 'C', text: '9:3:3:1' }, { id: 'D', text: '1:1:1:1' }],
+    correct: 'C',
+    explanation: 'Two genes assort independently, giving a 9:3:3:1 phenotypic ratio in the F2 generation.',
+    pyqFrequency: 'Very High', tags: ['Genetics', 'Mendel'],
+  },
+  {
+    id: 'q6', chapter: 'phy-2', subject: 'physics', year: 2023, difficulty: 'Medium',
+    text: 'The electric field intensity at a point inside a uniformly charged conducting sphere is:',
+    options: [{ id: 'A', text: 'Maximum' }, { id: 'B', text: 'Zero' }, { id: 'C', text: 'Same as on the surface' }, { id: 'D', text: 'Minimum but not zero' }],
+    correct: 'B',
+    explanation: "Inside a conductor the field is zero — a direct consequence of Gauss's law, as no charge is enclosed.",
+    pyqFrequency: 'High', tags: ['Gauss', 'Electrostatics'],
+  },
+  {
+    id: 'q7', chapter: 'chem-3', subject: 'chemistry', year: 2021, difficulty: 'Easy',
+    text: 'Which of the following is the most stable carbocation?',
+    options: [{ id: 'A', text: 'CH₃⁺' }, { id: 'B', text: '(CH₃)₂CH⁺' }, { id: 'C', text: '(CH₃)₃C⁺' }, { id: 'D', text: 'C₂H₅⁺' }],
+    correct: 'C',
+    explanation: 'Tertiary carbocations are most stable due to hyperconjugation and the +I effect of three methyl groups: 3° > 2° > 1° > CH₃⁺.',
+    pyqFrequency: 'High', tags: ['Organic', 'Carbocation'],
+  },
+  {
+    id: 'q8', chapter: 'phy-3', subject: 'physics', year: 2022, difficulty: 'Easy',
+    text: 'The focal length of a convex lens is 20 cm. Its power is:',
+    options: [{ id: 'A', text: '5 D' }, { id: 'B', text: '+5 D' }, { id: 'C', text: '−5 D' }, { id: 'D', text: '0.05 D' }],
+    correct: 'B',
+    explanation: 'Power = 1/f (in metres) = 1/0.20 = +5 D. A convex lens always has positive power.',
+    pyqFrequency: 'Medium', tags: ['Optics', 'Lens'],
+  },
+  {
+    id: 'q9', chapter: 'bio-2', subject: 'biology', year: 2020, difficulty: 'Easy',
+    text: 'Which organelle is known as the "powerhouse of the cell"?',
+    options: [{ id: 'A', text: 'Nucleus' }, { id: 'B', text: 'Ribosome' }, { id: 'C', text: 'Mitochondria' }, { id: 'D', text: 'Golgi apparatus' }],
+    correct: 'C',
+    explanation: 'Mitochondria generate most ATP through oxidative phosphorylation, powering cellular activities.',
+    pyqFrequency: 'Medium', tags: ['Cell', 'Organelle'],
+  },
+  {
+    id: 'q10', chapter: 'phy-4', subject: 'physics', year: 2023, difficulty: 'Hard',
+    text: 'The work function of a metal is 4 eV. The maximum wavelength of a photon that can cause photoelectric emission is approximately:',
+    options: [{ id: 'A', text: '310 nm' }, { id: 'B', text: '400 nm' }, { id: 'C', text: '540 nm' }, { id: 'D', text: '220 nm' }],
+    correct: 'A',
+    explanation: 'λ = hc/E = (6.63×10⁻³⁴ × 3×10⁸)/(4 × 1.6×10⁻¹⁹) ≈ 310 nm.',
+    pyqFrequency: 'High', tags: ['Modern Physics', 'Photoelectric'],
+  },
+  {
+    id: 'q11', chapter: 'bio-5', subject: 'biology', year: 2022, difficulty: 'Medium',
+    text: 'Which of the following is a sex-linked recessive disorder?',
+    options: [{ id: 'A', text: 'Sickle cell anaemia' }, { id: 'B', text: 'Haemophilia' }, { id: 'C', text: 'Phenylketonuria' }, { id: 'D', text: 'Thalassemia' }],
+    correct: 'B',
+    explanation: 'Haemophilia is X-linked recessive; affected males typically inherit the allele from carrier mothers.',
+    pyqFrequency: 'High', tags: ['Genetics', 'Inheritance'],
+  },
+  {
+    id: 'q12', chapter: 'bio-3', subject: 'biology', year: 2021, difficulty: 'Easy',
+    text: 'The C4 pathway of carbon fixation is also known as the:',
+    options: [{ id: 'A', text: 'Calvin cycle' }, { id: 'B', text: 'Hatch–Slack pathway' }, { id: 'C', text: 'Krebs cycle' }, { id: 'D', text: 'EMP pathway' }],
+    correct: 'B',
+    explanation: 'The C4 (Hatch–Slack) pathway produces a 4-carbon compound (oxaloacetate) as its first stable product.',
+    pyqFrequency: 'Medium', tags: ['Photosynthesis', 'Plant Physiology'],
+  },
+  {
+    id: 'q13', chapter: 'chem-3', subject: 'chemistry', year: 2023, difficulty: 'Medium',
+    text: "Markovnikov's rule is best illustrated by the:",
+    options: [{ id: 'A', text: 'Addition of HBr to propene' }, { id: 'B', text: 'Addition of HBr to ethene' }, { id: 'C', text: 'Addition of Br₂ to ethene' }, { id: 'D', text: 'Elimination of HBr from bromoethane' }],
+    correct: 'A',
+    explanation: 'Markovnikov addition to an unsymmetrical alkene places H on the carbon with more hydrogens, forming the more stable carbocation.',
+    pyqFrequency: 'High', tags: ['Organic', 'Addition'],
+  },
+  {
+    id: 'q14', chapter: 'chem-4', subject: 'chemistry', year: 2020, difficulty: 'Easy',
+    text: 'For an exothermic reaction, the enthalpy change (ΔH) is:',
+    options: [{ id: 'A', text: 'Positive' }, { id: 'B', text: 'Negative' }, { id: 'C', text: 'Zero' }, { id: 'D', text: 'Cannot be determined' }],
+    correct: 'B',
+    explanation: 'Exothermic reactions release energy, so the products have lower enthalpy than the reactants, making ΔH negative.',
+    pyqFrequency: 'Medium', tags: ['Thermodynamics', 'Enthalpy'],
+  },
+  {
+    id: 'q15', chapter: 'bio-6', subject: 'biology', year: 2022, difficulty: 'Medium',
+    text: 'The pyramid of energy in an ecosystem is always:',
+    options: [{ id: 'A', text: 'Inverted' }, { id: 'B', text: 'Upright' }, { id: 'C', text: 'Spindle-shaped' }, { id: 'D', text: 'Variable' }],
+    correct: 'B',
+    explanation: 'Energy decreases at every trophic level (second law of thermodynamics), so the pyramid of energy is always upright.',
+    pyqFrequency: 'High', tags: ['Ecology', 'Energy Flow'],
+  },
+  {
+    id: 'q16', chapter: 'chem-2', subject: 'chemistry', year: 2023, difficulty: 'Hard',
+    text: 'The IUPAC name of [Co(NH₃)₅Cl]Cl₂ is:',
+    options: [
+      { id: 'A', text: 'Pentaamminechloridocobalt(III) chloride' },
+      { id: 'B', text: 'Pentaamminechloridocobalt(II) chloride' },
+      { id: 'C', text: 'Chloridopentaamminecobalt(II) chloride' },
+      { id: 'D', text: 'Pentachloridoamminecobalt(III) chloride' },
+    ],
+    correct: 'A',
+    explanation: 'Ligands are named alphabetically (ammine before chlorido); cobalt is +3 here, and the counter-ion chloride follows.',
+    pyqFrequency: 'Medium', tags: ['Coordination', 'Nomenclature'],
+  },
 ];
 
+// ── Mock tests (6 completed + 1 pending) ──────────────────────────────────
 export const MOCK_TESTS = [
-  { id: 1, name: 'Full Mock #12', date: '2025-06-15', score: 542, total: 720, rank: 1847, percentile: 89.2, timeTaken: 178, totalTime: 200, physics: { score: 148, total: 180, correct: 37, wrong: 5, unattempted: 3 }, chemistry: { score: 156, total: 180, correct: 39, wrong: 3, unattempted: 3 }, biology: { score: 238, total: 360, correct: 62, wrong: 12, unattempted: 16 } },
-  { id: 2, name: 'Full Mock #11', date: '2025-06-08', score: 518, total: 720, rank: 2340, percentile: 86.5, timeTaken: 185, totalTime: 200, physics: { score: 132, total: 180, correct: 34, wrong: 8, unattempted: 3 }, chemistry: { score: 148, total: 180, correct: 38, wrong: 6, unattempted: 1 }, biology: { score: 238, total: 360, correct: 60, wrong: 10, unattempted: 20 } },
-  { id: 3, name: 'Full Mock #10', date: '2025-06-01', score: 496, total: 720, rank: 3120, percentile: 83.8, timeTaken: 190, totalTime: 200, physics: { score: 128, total: 180, correct: 33, wrong: 9, unattempted: 3 }, chemistry: { score: 140, total: 180, correct: 36, wrong: 8, unattempted: 1 }, biology: { score: 228, total: 360, correct: 58, wrong: 14, unattempted: 18 } },
-  { id: 4, name: 'Full Mock #9', date: '2025-05-25', score: 478, total: 720, rank: 3850, percentile: 81.2, timeTaken: 192, totalTime: 200, physics: { score: 120, total: 180, correct: 31, wrong: 11, unattempted: 3 }, chemistry: { score: 134, total: 180, correct: 34, wrong: 8, unattempted: 3 }, biology: { score: 224, total: 360, correct: 57, wrong: 15, unattempted: 18 } },
-  { id: 5, name: 'Full Mock #8', date: '2025-05-18', score: 455, total: 720, rank: 4620, percentile: 78.5, timeTaken: 195, totalTime: 200, physics: { score: 112, total: 180, correct: 29, wrong: 13, unattempted: 3 }, chemistry: { score: 126, total: 180, correct: 32, wrong: 10, unattempted: 3 }, biology: { score: 217, total: 360, correct: 55, wrong: 17, unattempted: 18 } },
+  { id: 'm7', type: 'full', title: 'Full Mock #7', duration: 200, totalMarks: 720, questions: 180, completed: false, score: null, rank: null, date: null, subjectScores: null },
+  { id: 'm6', type: 'full', title: 'Full Mock #6', duration: 200, totalMarks: 720, questions: 180, completed: true, score: 541, rank: 41240, date: '2026-06-28', accuracy: 75, timeTaken: '2hr 48min', subjectScores: { biology: 238, physics: 148, chemistry: 155 } },
+  { id: 'm5', type: 'full', title: 'Full Mock #5', duration: 200, totalMarks: 720, questions: 180, completed: true, score: 518, rank: 48200, date: '2026-06-14', accuracy: 71, timeTaken: '2hr 52min', subjectScores: { biology: 230, physics: 140, chemistry: 148 } },
+  { id: 'm4', type: 'full', title: 'Full Mock #4', duration: 200, totalMarks: 720, questions: 180, completed: true, score: 496, rank: 55800, date: '2026-05-31', accuracy: 68, timeTaken: '2hr 55min', subjectScores: { biology: 224, physics: 132, chemistry: 140 } },
+  { id: 'm3', type: 'full', title: 'Full Mock #3', duration: 200, totalMarks: 720, questions: 180, completed: true, score: 478, rank: 61400, date: '2026-05-17', accuracy: 66, timeTaken: '2hr 58min', subjectScores: { biology: 218, physics: 126, chemistry: 134 } },
+  { id: 'm2', type: 'full', title: 'Full Mock #2', duration: 200, totalMarks: 720, questions: 180, completed: true, score: 455, rank: 68900, date: '2026-05-03', accuracy: 63, timeTaken: '3hr 02min', subjectScores: { biology: 210, physics: 120, chemistry: 125 } },
+  { id: 'm1', type: 'full', title: 'Full Mock #1', duration: 200, totalMarks: 720, questions: 180, completed: true, score: 432, rank: 76000, date: '2026-04-19', accuracy: 60, timeTaken: '3hr 05min', subjectScores: { biology: 202, physics: 112, chemistry: 118 } },
+];
+
+export const SUBJECT_MOCKS = [
+  { id: 'sm-bio', title: 'Biology', subject: 'biology', questions: 90, duration: 100 },
+  { id: 'sm-phy', title: 'Physics', subject: 'physics', questions: 45, duration: 60 },
+  { id: 'sm-chem', title: 'Chemistry', subject: 'chemistry', questions: 45, duration: 60 },
 ];
 
 export const MISTAKE_DNA = {
@@ -116,57 +220,231 @@ export const MISTAKE_DNA = {
   timePressure: 12,
   unattempted: 22,
   total: 86,
-  topWeakConcepts: [
-    'Molecular Orbital Theory',
-    'Digestive Enzymes',
-    "Coulomb's Law Applications",
-    'Krebs Cycle Steps',
-    "Lens Maker's Equation",
-  ],
 };
 
+// ── Study rooms ───────────────────────────────────────────────────────────
 export const STUDY_ROOMS = [
-  { id: 1, name: 'Bio Warriors', host: 'Priya M.', members: 24, maxMembers: 30, status: 'live', chapter: 'Genetics', timeRemaining: 47 * 60, startedAt: '2025-06-18T14:00:00Z' },
-  { id: 2, name: 'Physics Grind', host: 'Rahul K.', members: 18, maxMembers: 25, status: 'live', chapter: 'Electrostatics', timeRemaining: 23 * 60, startedAt: '2025-06-18T15:00:00Z' },
-  { id: 3, name: 'Organic Chemistry Club', host: 'Sneha R.', members: 0, maxMembers: 20, status: 'scheduled', chapter: 'Organic Chemistry', scheduledFor: '2025-06-19T10:00:00Z' },
-  { id: 4, name: 'NEET Toppers Only', host: 'Vikram S.', members: 0, maxMembers: 15, status: 'scheduled', chapter: 'Full Syllabus', scheduledFor: '2025-06-19T16:00:00Z' },
+  {
+    id: 'r1', title: 'Bio Warriors — Genetics Grind', subject: 'biology', host: 'Priya M.',
+    duration: 45, status: 'live', scheduledAt: null, totalMembers: 24,
+    members: [
+      { initials: 'PM', color: 'green', name: 'Priya M.', status: 'studying', chapter: 'Genetics' },
+      { initials: 'AK', color: 'blue', name: 'Aditya K.', status: 'studying', chapter: 'Evolution' },
+      { initials: 'SR', color: 'purple', name: 'Sneha R.', status: 'break', chapter: 'Genetics' },
+    ],
+  },
+  {
+    id: 'r2', title: 'Physics Power Hour', subject: 'physics', host: 'Rahul K.',
+    duration: 60, status: 'live', scheduledAt: null, totalMembers: 12,
+    members: [
+      { initials: 'RK', color: 'blue', name: 'Rahul K.', status: 'studying', chapter: 'Electrostatics' },
+      { initials: 'MG', color: 'green', name: 'Meera G.', status: 'studying', chapter: 'Optics' },
+      { initials: 'TN', color: 'orange', name: 'Tarun N.', status: 'studying', chapter: 'Modern Physics' },
+    ],
+  },
+  {
+    id: 'r3', title: 'Organic Chem Club', subject: 'chemistry', host: 'Sneha R.',
+    duration: 45, status: 'scheduled', scheduledAt: '8:00 PM', totalMembers: 8,
+    members: [
+      { initials: 'SR', color: 'purple', name: 'Sneha R.', status: 'studying', chapter: 'Organic' },
+    ],
+  },
 ];
 
 export const LEADERBOARD = [
-  { rank: 1, name: 'Priya Menon', score: 648, avatar: null, streak: 45 },
-  { rank: 2, name: 'Rahul Kumar', score: 612, avatar: null, streak: 32 },
-  { rank: 3, name: 'Sneha Reddy', score: 598, avatar: null, streak: 28 },
-  { rank: 4, name: 'Arjun Sharma', score: 542, avatar: null, streak: 14, isUser: true },
-  { rank: 5, name: 'Vikram Singh', score: 528, avatar: null, streak: 21 },
-  { rank: 6, name: 'Ananya Patel', score: 510, avatar: null, streak: 18 },
-  { rank: 7, name: 'Karthik Nair', score: 498, avatar: null, streak: 12 },
-  { rank: 8, name: 'Divya Gupta', score: 485, avatar: null, streak: 9 },
+  { rank: 1, initials: 'PM', color: 'green', name: 'Priya Menon', hoursThisWeek: 42, score: 648, isYou: false },
+  { rank: 2, initials: 'RK', color: 'blue', name: 'Rahul Kumar', hoursThisWeek: 38, score: 612, isYou: false },
+  { rank: 3, initials: 'SR', color: 'purple', name: 'Sneha Reddy', hoursThisWeek: 35, score: 598, isYou: false },
+  { rank: 4, initials: 'RS', color: 'green', name: 'Riya Sharma (You)', hoursThisWeek: 28, score: 541, isYou: true },
+  { rank: 5, initials: 'VS', color: 'orange', name: 'Vikram Singh', hoursThisWeek: 24, score: 528, isYou: false },
 ];
 
+// ── Concept cards ─────────────────────────────────────────────────────────
 export const CONCEPT_CARDS = [
-  { id: 1, chapterId: 1, title: 'Digestive Enzymes Overview', content: 'The human digestive system uses various enzymes at different stages. Salivary amylase breaks down starch in the mouth, pepsin digests proteins in the stomach, trypsin and chymotrypsin work in the small intestine, and lipase breaks down fats.', formulae: ['Rate = k[S]/(Km + [S])'], ncertRef: 'Ch 16, Page 262', pyqFrequency: 'Very High', bookmarked: false },
-  { id: 2, chapterId: 1, title: 'Absorption in Small Intestine', content: 'Nutrients are absorbed through villi and microvilli in the small intestine. The large surface area created by these structures enables efficient absorption of amino acids, monosaccharides, fatty acids, vitamins, and minerals.', formulae: [], ncertRef: 'Ch 16, Page 268', pyqFrequency: 'High', bookmarked: true },
-  { id: 3, chapterId: 6, title: 'Molecular Orbital Theory', content: 'MOT describes bonding using molecular orbitals formed by Linear Combination of Atomic Orbitals (LCAO). Electrons fill molecular orbitals following the aufbau principle, Hund\'s rule, and Pauli exclusion principle.', formulae: ['Bond Order = (Nb - Na)/2'], ncertRef: 'Ch 4, Page 120', pyqFrequency: 'Very High', bookmarked: false },
-  { id: 4, chapterId: 11, title: "Newton's Laws of Motion", content: 'Three fundamental laws governing motion: 1st law (inertia), 2nd law (F=ma), 3rd law (action-reaction). These form the basis of classical mechanics and are essential for solving NEET physics problems.', formulae: ['F = ma', 'F₁₂ = -F₂₁'], ncertRef: 'Ch 5, Page 95', pyqFrequency: 'Very High', bookmarked: true },
-  { id: 5, chapterId: 3, title: 'Cell Organelles', content: 'Eukaryotic cells contain membrane-bound organelles including nucleus, mitochondria, endoplasmic reticulum, Golgi apparatus, lysosomes, and chloroplasts (in plants). Each organelle has specific functions essential for cell survival.', formulae: [], ncertRef: 'Ch 8, Page 131', pyqFrequency: 'High', bookmarked: false },
-  { id: 6, chapterId: 12, title: "Coulomb's Law & Electric Field", content: 'The electrostatic force between two point charges is directly proportional to the product of charges and inversely proportional to the square of distance between them.', formulae: ['F = kq₁q₂/r²', 'E = kq/r²'], ncertRef: 'Ch 1, Page 10', pyqFrequency: 'Very High', bookmarked: false },
-  { id: 7, chapterId: 2, title: 'Mendelian Genetics', content: 'Mendel\'s laws of inheritance include the Law of Dominance, Law of Segregation, and Law of Independent Assortment. These form the foundation of classical genetics and explain inheritance patterns in sexually reproducing organisms.', formulae: [], ncertRef: 'Ch 5, Page 75', pyqFrequency: 'Very High', bookmarked: false },
-  { id: 8, chapterId: 7, title: 'Reaction Mechanisms in Organic Chemistry', content: 'Organic reactions proceed through different mechanisms: SN1 and SN2 for nucleophilic substitution, E1 and E2 for elimination, and electrophilic addition for alkenes. Understanding these mechanisms is key to predicting products.', formulae: ['Rate(SN2) = k[substrate][nucleophile]'], ncertRef: 'Ch 12, Page 340', pyqFrequency: 'High', bookmarked: true },
-  { id: 9, chapterId: 13, title: 'Wave Optics & Interference', content: 'Light exhibits wave properties including interference and diffraction. In Young\'s double slit experiment, constructive interference occurs when path difference is a whole number multiple of wavelength, producing bright fringes.', formulae: ['Fringe width β = λD/d', 'Path diff = d sin θ'], ncertRef: 'Ch 10, Page 353', pyqFrequency: 'High', bookmarked: false },
-  { id: 10, chapterId: 14, title: 'Photoelectric Effect & Dual Nature', content: 'Einstein explained the photoelectric effect using the photon theory of light. The kinetic energy of emitted electrons depends on the frequency of incident light, not its intensity. This established the particle nature of light.', formulae: ['KE_max = hν - φ', 'λ = h/mv'], ncertRef: 'Ch 11, Page 386', pyqFrequency: 'Very High', bookmarked: false },
+  {
+    id: 'c1', chapter: 'bio-1', title: 'Digestive Enzymes Overview', pyqFreq: 'Very High',
+    tags: ['Digestion', 'Enzymes'],
+    content: [
+      'Salivary amylase begins starch digestion in the mouth.',
+      'Pepsin (activated from pepsinogen by HCl) digests proteins in the stomach.',
+      'Trypsin, chymotrypsin and lipase act in the small intestine.',
+    ],
+    formulae: ['Rate = k[S] / (Km + [S])'],
+    ncertRef: 'Biology Ch 16, Page 262',
+  },
+  {
+    id: 'c2', chapter: 'chem-1', title: 'Molecular Orbital Theory', pyqFreq: 'Very High',
+    tags: ['MOT', 'Bonding'],
+    content: [
+      'Molecular orbitals form by Linear Combination of Atomic Orbitals (LCAO).',
+      'Electrons fill MOs following aufbau, Hund and Pauli rules.',
+      'Bond order predicts stability and magnetic behaviour.',
+    ],
+    formulae: ['Bond Order = (Nb − Na) / 2'],
+    ncertRef: 'Chemistry Ch 4, Page 120',
+  },
+  {
+    id: 'c3', chapter: 'phy-6', title: "Newton's Laws of Motion", pyqFreq: 'Very High',
+    tags: ['Mechanics', 'Force'],
+    content: [
+      'First law: a body stays at rest or in uniform motion unless acted on by a net force.',
+      'Second law: F = ma, the rate of change of momentum.',
+      'Third law: every action has an equal and opposite reaction.',
+    ],
+    formulae: ['F = ma', 'F₁₂ = −F₂₁'],
+    ncertRef: 'Physics Ch 5, Page 95',
+  },
+  {
+    id: 'c4', chapter: 'phy-2', title: "Coulomb's Law & Electric Field", pyqFreq: 'Very High',
+    tags: ['Electrostatics', 'Field'],
+    content: [
+      'The force between two point charges is proportional to their product.',
+      'It is inversely proportional to the square of the distance between them.',
+      'Electric field is force per unit positive test charge.',
+    ],
+    formulae: ['F = kq₁q₂ / r²', 'E = kq / r²'],
+    ncertRef: 'Physics Ch 1, Page 10',
+  },
+  {
+    id: 'c5', chapter: 'bio-5', title: 'Mendelian Genetics', pyqFreq: 'Very High',
+    tags: ['Genetics', 'Inheritance'],
+    content: [
+      'Law of Dominance: one allele masks the effect of the other.',
+      'Law of Segregation: alleles separate during gamete formation.',
+      'Law of Independent Assortment: genes for different traits assort independently.',
+    ],
+    formulae: [],
+    ncertRef: 'Biology Ch 5, Page 75',
+  },
+  {
+    id: 'c6', chapter: 'phy-4', title: 'Photoelectric Effect & Dual Nature', pyqFreq: 'High',
+    tags: ['Modern Physics', 'Quantum'],
+    content: [
+      'Light behaves as photons of energy E = hν.',
+      'Electron kinetic energy depends on frequency, not intensity.',
+      'Matter also shows wave nature via the de Broglie relation.',
+    ],
+    formulae: ['KEmax = hν − φ', 'λ = h / mv'],
+    ncertRef: 'Physics Ch 11, Page 386',
+  },
+  {
+    id: 'c7', chapter: 'chem-3', title: 'Organic Reaction Mechanisms', pyqFreq: 'High',
+    tags: ['Organic', 'Mechanism'],
+    content: [
+      'SN1 and SN2 govern nucleophilic substitution.',
+      'E1 and E2 govern elimination reactions.',
+      'Electrophilic addition applies to alkenes and alkynes.',
+    ],
+    formulae: ['Rate(SN2) = k[substrate][Nu]'],
+    ncertRef: 'Chemistry Ch 12, Page 340',
+  },
+  {
+    id: 'c8', chapter: 'bio-3', title: 'Photosynthesis Pathways', pyqFreq: 'High',
+    tags: ['Plant Physiology', 'C3/C4'],
+    content: [
+      'C3 plants fix carbon directly via the Calvin cycle.',
+      'C4 (Hatch–Slack) plants first make a 4-carbon compound.',
+      'CAM plants fix CO₂ at night to conserve water.',
+    ],
+    formulae: [],
+    ncertRef: 'Biology Ch 13, Page 210',
+  },
 ];
 
-export const SCORE_HISTORY = [
-  { date: 'Jan', score: 420 },
-  { date: 'Feb', score: 455 },
-  { date: 'Mar', score: 478 },
-  { date: 'Apr', score: 496 },
-  { date: 'May', score: 518 },
-  { date: 'Jun', score: 542 },
-];
-
+// ── Plans ─────────────────────────────────────────────────────────────────
 export const PLANS = [
-  { id: 'free', name: 'Free', price: 0, period: null, features: ['5 questions/day', 'Basic progress tracking', '1 mock test/month', 'Community rooms'], limitations: ['No AI diagnostics', 'No Mistake DNA', 'Limited concept cards'] },
-  { id: 'pro_monthly', name: 'Pro Monthly', price: 499, period: 'month', popular: true, features: ['Unlimited questions', 'AI-powered diagnostics', 'Full Mistake DNA analysis', 'Unlimited mock tests', 'All concept cards', 'Priority doubt resolution', 'Study rooms creation', 'Rank predictor'] },
-  { id: 'pro_yearly', name: 'Pro Yearly', price: 3999, period: 'year', savings: '33%', features: ['Everything in Pro Monthly', 'Personalized study plan', 'Weekly AI coaching report', 'Early access to new features', 'Offline mode'] },
+  {
+    id: 'free', name: 'Free', price: '₹0', period: '', popular: false, cta: 'Continue free',
+    features: ['5 questions per day', 'Basic progress tracking', '1 mock test / month', 'Community study rooms'],
+  },
+  {
+    id: 'pro_monthly', name: 'Pro Monthly', price: '₹299', period: '/month', popular: true, cta: 'Start 7-day free trial',
+    features: [
+      'Unlimited practice questions', 'AI-powered weak-spot diagnostics', 'Full Mistake DNA analysis',
+      'Unlimited mock tests', 'All concept cards unlocked', 'Priority doubt resolution',
+      'Create your own study rooms', 'AIR rank predictor',
+    ],
+  },
+  {
+    id: 'pro_yearly', name: 'Pro Yearly', price: '₹1,999', period: '/year', popular: false, cta: 'Best value',
+    saving: 'Save ₹1,589 vs monthly',
+    features: [
+      'Everything in Pro Monthly', 'Personalised study plan', 'Weekly AI coaching report',
+      'Forgetting-curve revision alerts', 'Early access to new features', 'Offline mode',
+      'Shareable Brain Map cards', 'Exam-day strategy planner', 'Detailed answer reviews', 'No ads, ever',
+    ],
+  },
 ];
+
+// ── Daily missions (always 3) ─────────────────────────────────────────────
+export const DAILY_MISSIONS = [
+  { type: 'fix', title: 'Fix: Human Physiology', subtitle: '10 questions · Critical gap · 47% accuracy', color: 'orange', chapter: 'bio-1' },
+  { type: 'revise', title: 'Revise: Chemical Bonding', subtitle: '8 questions · Forgetting-curve alert · MOT', color: 'purple', chapter: 'chem-1' },
+  { type: 'maintain', title: 'Maintain: Genetics & Evolution', subtitle: '6 questions · Keep your streak · 81% strong', color: 'green', chapter: 'bio-5' },
+];
+
+// ── Doubt history ─────────────────────────────────────────────────────────
+export const DOUBT_HISTORY = [
+  {
+    id: 'd1', question: 'Why is the bond order of O₂ equal to 2 but it is still paramagnetic?', subject: 'chemistry',
+    answer: 'O₂ has a bond order of 2 from (Nb − Na)/2 = (10 − 6)/2. It is paramagnetic because two electrons occupy the degenerate π* antibonding orbitals singly, following Hund\'s rule — giving unpaired spins.',
+    ncertRef: 'Chemistry Ch 4, Page 122', date: '2 days ago',
+  },
+  {
+    id: 'd2', question: 'What is the difference between the jejunum and the ileum in absorption?', subject: 'biology',
+    answer: 'Both absorb nutrients, but the jejunum handles most carbohydrate and protein absorption with taller villi, while the ileum specialises in absorbing vitamin B12 and bile salts.',
+    ncertRef: 'Biology Ch 16, Page 268', date: '5 days ago',
+  },
+  {
+    id: 'd3', question: 'How do I quickly find the equivalent resistance of a Wheatstone bridge?', subject: 'physics',
+    answer: 'If the bridge is balanced (P/Q = R/S), no current flows through the galvanometer, so it can be removed. Then simplify the two series arms in parallel.',
+    ncertRef: 'Physics Ch 3, Page 116', date: '1 week ago',
+  },
+];
+
+// ── Achievements ──────────────────────────────────────────────────────────
+export const ACHIEVEMENTS = [
+  { id: 'a1', emoji: '🔥', title: 'Streak 14', earned: true, description: '14-day study streak' },
+  { id: 'a2', emoji: '📝', title: '5 Mocks', earned: true, description: 'Completed 5 full mocks' },
+  { id: 'a3', emoji: '⚡', title: 'Speed Solver', earned: true, description: 'Solved 50 questions in a day' },
+  { id: 'a4', emoji: '🎯', title: 'Sharpshooter', earned: false, description: 'Hit 90% accuracy in a session' },
+  { id: 'a5', emoji: '🏆', title: 'Top 10K', earned: false, description: 'Reach AIR under 10,000' },
+  { id: 'a6', emoji: '🌙', title: 'Night Owl', earned: false, description: 'Study after midnight 5 times' },
+];
+
+// ── Score trend (per completed mock, oldest → newest) ─────────────────────
+export const SCORE_TREND = [
+  { label: 'M1', score: 432 },
+  { label: 'M2', score: 455 },
+  { label: 'M3', score: 478 },
+  { label: 'M4', score: 496 },
+  { label: 'M5', score: 518 },
+  { label: 'M6', score: 541 },
+];
+
+// Weakest chapters (derived helper for Progress screen).
+export const WEAKEST_CHAPTERS = [...CHAPTERS]
+  .sort((a, b) => a.accuracy - b.accuracy)
+  .slice(0, 4);
+
+// 12 weeks of study heat-map data (0 = future, 1 = studied, 2 = missed, 3 = today).
+export const STUDY_HEATMAP = (() => {
+  const weeks = 12;
+  const grid = [];
+  let counter = 0;
+  for (let w = 0; w < weeks; w++) {
+    const row = [];
+    for (let d = 0; d < 7; d++) {
+      const isTodayCell = w === weeks - 1 && d === 3;
+      const isFuture = w === weeks - 1 && d > 3;
+      let val;
+      if (isTodayCell) val = 3;
+      else if (isFuture) val = 0;
+      else val = counter % 9 === 0 ? 2 : 1; // occasional miss
+      counter++;
+      row.push(val);
+    }
+    grid.push(row);
+  }
+  return grid;
+})();

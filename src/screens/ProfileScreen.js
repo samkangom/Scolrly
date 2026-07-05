@@ -1,75 +1,66 @@
 import React from 'react';
-import { View, Text, ScrollView, SafeAreaView } from 'react-native';
-import { useTheme, Typography, Spacing } from '../theme';
-import { Card, Avatar, SectionHeader, Badge } from '../components/common';
-import { USER, STATS } from '../data';
+import { View, ScrollView, Text } from 'react-native';
+import { useTheme } from '../theme';
+import { Spacing, Radius } from '../theme/tokens';
+import {
+  Screen, Txt, Eyebrow, Card, Avatar, BackButton, SectionHeader, Badge,
+  AchievementBadge, CalendarHeatmap,
+} from '../components/common';
+import { STATS, ACHIEVEMENTS, STUDY_HEATMAP } from '../data';
+import { useApp } from '../context/AppContext';
 
-export default function ProfileScreen() {
+function StatBox({ value, label, color }) {
   const { colors } = useTheme();
+  return (
+    <Card style={{ flex: 1, alignItems: 'center', paddingVertical: Spacing.lg }}>
+      <Text style={{ color: color || colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 24 }}>{value}</Text>
+      <Txt variant="caption" color={colors.textMuted} style={{ marginTop: 4, textAlign: 'center' }}>{label}</Txt>
+    </Card>
+  );
+}
 
-  const stats = [
-    { label: 'Questions', value: STATS.totalQuestionsAnswered.toLocaleString() },
-    { label: 'Accuracy', value: STATS.accuracy + '%' },
-    { label: 'Hours', value: STATS.hoursStudied.toString() },
-    { label: 'Mocks', value: STATS.mocksCompleted.toString() },
-  ];
-
-  const achievements = [
-    { label: 'First Mock', icon: '🎯' },
-    { label: '7-Day Streak', icon: '🔥' },
-    { label: '1000 Qs', icon: '💪' },
-    { label: 'Biology Master', icon: '🧬' },
-    { label: 'Speed Demon', icon: '⚡' },
-    { label: 'Night Owl', icon: '🦉' },
-  ];
+export default function ProfileScreen({ navigation }) {
+  const { colors } = useTheme();
+  const { profile, streak } = useApp();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: Spacing.base, paddingBottom: 40 }}>
-        <Text style={[Typography.h1, { color: colors.textPrimary, marginBottom: Spacing.lg }]}>Profile</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxxl }}>
+        <BackButton onPress={() => navigation.goBack()} style={{ marginBottom: Spacing.lg }} />
 
-        {/* Avatar + Name */}
-        <View style={{ alignItems: 'center', marginBottom: Spacing.xl }}>
-          <Avatar name={USER.name} size={80} style={{ marginBottom: Spacing.md }} />
-          <Text style={[Typography.h2, { color: colors.textPrimary }]}>{USER.name}</Text>
-          <Text style={[Typography.caption, { color: colors.textSecondary, marginBottom: Spacing.sm }]}>{USER.class} · {USER.coaching}</Text>
-          <Badge label={`${USER.streak} day streak`} color={colors.green} />
+        <View style={{ alignItems: 'center' }}>
+          <Avatar initials={profile.initials} color="green" size={80} />
+          <Txt variant="h1" style={{ marginTop: Spacing.md }}>{profile.name}</Txt>
+          <Txt variant="body" color={colors.textSecondary} style={{ marginTop: 2 }}>{profile.status} · NEET {profile.targetYear}</Txt>
+          <View style={{ backgroundColor: colors.greenGlow, borderRadius: Radius.pill, paddingHorizontal: Spacing.md, paddingVertical: 5, marginTop: Spacing.md }}>
+            <Text style={{ color: colors.green, fontFamily: 'Inter_700Bold', fontWeight: '700', fontSize: 13 }}>🔥 {streak} day streak</Text>
+          </View>
         </View>
 
-        {/* Stats Grid */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.xl }}>
-          {stats.map((s) => (
-            <Card key={s.label} style={{ width: '48%', alignItems: 'center', paddingVertical: Spacing.lg }}>
-              <Text style={[Typography.stat, { color: colors.textPrimary }]}>{s.value}</Text>
-              <Text style={[Typography.small, { color: colors.textMuted, marginTop: Spacing.xs }]}>{s.label}</Text>
-            </Card>
-          ))}
+        {/* Stats grid 2x2 */}
+        <View style={{ gap: Spacing.sm, marginTop: Spacing.xl }}>
+          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+            <StatBox value={STATS.questionsAnswered.toLocaleString('en-IN')} label="Questions answered" />
+            <StatBox value={`${STATS.accuracy}%`} label="Accuracy" color={colors.blue} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+            <StatBox value={STATS.hoursStudied} label="Hours studied" color={colors.purple} />
+            <StatBox value={STATS.mocksCompleted} label="Mocks completed" color={colors.orange} />
+          </View>
         </View>
 
         {/* Achievements */}
-        <SectionHeader eyebrow="ACHIEVEMENTS" title="Badges Earned" />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.xl }}>
-          {achievements.map((a) => (
-            <Card key={a.label} style={{ width: '30%', alignItems: 'center', paddingVertical: Spacing.base }}>
-              <Text style={{ fontSize: 28, marginBottom: Spacing.xs }}>{a.icon}</Text>
-              <Text style={[Typography.small, { color: colors.textSecondary, textAlign: 'center' }]}>{a.label}</Text>
-            </Card>
-          ))}
-        </View>
+        <SectionHeader title="Achievements" style={{ marginTop: Spacing.xl }} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.md, paddingVertical: Spacing.xs }}>
+          {ACHIEVEMENTS.map((a) => <AchievementBadge key={a.id} achievement={a} />)}
+        </ScrollView>
 
-        {/* Calendar placeholder */}
-        <SectionHeader eyebrow="ACTIVITY" title="Study Calendar" />
-        <Card style={{ paddingVertical: Spacing.xl, alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3, width: 280 }}>
-            {Array.from({ length: 84 }, (_, i) => {
-              const intensity = Math.random();
-              const bg = intensity > 0.7 ? colors.green : intensity > 0.4 ? colors.green + '60' : intensity > 0.15 ? colors.green + '25' : colors.border;
-              return <View key={i} style={{ width: 16, height: 16, borderRadius: 3, backgroundColor: bg }} />;
-            })}
-          </View>
-          <Text style={[Typography.small, { color: colors.textMuted, marginTop: Spacing.md }]}>Last 12 weeks</Text>
+        {/* Study calendar heatmap */}
+        <SectionHeader title="Study calendar" style={{ marginTop: Spacing.xl }} />
+        <Card>
+          <CalendarHeatmap data={STUDY_HEATMAP} />
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

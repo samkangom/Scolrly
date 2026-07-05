@@ -1,75 +1,78 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useTheme, Typography, Spacing } from '../theme';
-import { Card, SectionHeader, Btn, Badge, Avatar, Divider } from '../components/common';
+import React, { useState, useCallback } from 'react';
+import { View, ScrollView, TouchableOpacity, Text, RefreshControl } from 'react-native';
+import { useTheme } from '../theme';
+import { Spacing, Radius } from '../theme/tokens';
+import {
+  Screen, Txt, Eyebrow, Card, GreenCard, SectionHeader, RoomCard, LeaderboardRow, IconBox, EmptyState,
+} from '../components/common';
 import { STUDY_ROOMS, LEADERBOARD } from '../data';
+import { Haptic } from '../utils/haptics';
 
 export default function RoomsScreen({ navigation }) {
   const { colors } = useTheme();
-  const liveRooms = STUDY_ROOMS.filter((r) => r.status === 'live');
-  const upcoming = STUDY_ROOMS.filter((r) => r.status === 'scheduled');
+  const [refreshing, setRefreshing] = useState(false);
+  const live = STUDY_ROOMS.filter((r) => r.status === 'live');
+  const scheduled = STUDY_ROOMS.filter((r) => r.status === 'scheduled');
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true); Haptic.light();
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
+
+  const open = (room) => navigation.navigate('ActiveRoom', { roomId: room.id });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: Spacing.base, paddingBottom: 40 }}>
-        <Text style={[Typography.h1, { color: colors.textPrimary, marginBottom: Spacing.lg }]}>Study Rooms</Text>
+    <Screen>
+      <ScrollView
+        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxxl }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.green} />}
+      >
+        <Txt variant="h1">Study Rooms</Txt>
+        <Txt variant="body" color={colors.textSecondary} style={{ marginTop: 4 }}>Study with others. Stay accountable.</Txt>
 
-        {/* Live Rooms */}
-        <SectionHeader eyebrow="LIVE NOW" title="Active Rooms" />
-        {liveRooms.map((room) => (
-          <TouchableOpacity key={room.id} activeOpacity={0.85} onPress={() => navigation.navigate('ActiveRoom', { roomId: room.id })}>
-            <Card style={{ marginBottom: Spacing.sm }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green, marginRight: Spacing.sm }} />
-                  <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>{room.name}</Text>
-                </View>
-                <Badge label="LIVE" color={colors.green} />
-              </View>
-              <Text style={[Typography.small, { color: colors.textSecondary, marginBottom: Spacing.sm }]}>
-                {room.chapter} · Hosted by {room.host}
-              </Text>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={[Typography.caption, { color: colors.textMuted }]}>{room.members}/{room.maxMembers} members</Text>
-                <Btn title="Join" onPress={() => navigation.navigate('ActiveRoom', { roomId: room.id })} style={{ paddingVertical: Spacing.xs, paddingHorizontal: Spacing.base }} />
-              </View>
-            </Card>
-          </TouchableOpacity>
-        ))}
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.greenGlow, alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: Spacing.md, paddingVertical: 6, marginTop: Spacing.md }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green, marginRight: 8 }} />
+          <Text style={{ color: colors.green, fontFamily: 'Inter_700Bold', fontWeight: '700', fontSize: 12 }}>284 students online now</Text>
+        </View>
 
-        {/* Upcoming */}
-        <SectionHeader eyebrow="UPCOMING" title="Scheduled Rooms" style={{ marginTop: Spacing.lg }} />
-        {upcoming.map((room) => (
-          <Card key={room.id} style={{ marginBottom: Spacing.sm }}>
-            <Text style={[Typography.bodyBold, { color: colors.textPrimary, marginBottom: Spacing.xs }]}>{room.name}</Text>
-            <Text style={[Typography.small, { color: colors.textSecondary, marginBottom: Spacing.sm }]}>
-              {room.chapter} · Hosted by {room.host}
-            </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={[Typography.caption, { color: colors.textMuted }]}>Max {room.maxMembers} members</Text>
-              <Badge label="Scheduled" color={colors.purple} />
+        {/* Solo focus */}
+        <TouchableOpacity activeOpacity={0.85} onPress={() => { Haptic.light(); open(STUDY_ROOMS[0]); }} style={{ marginTop: Spacing.lg }}>
+          <Card style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <IconBox color="green"><Text style={{ fontSize: 20 }}>🎯</Text></IconBox>
+            <View style={{ flex: 1, marginLeft: Spacing.md }}>
+              <Txt variant="h4">Solo deep focus</Txt>
+              <Txt variant="caption" color={colors.textMuted} style={{ marginTop: 2 }}>No distractions · pomodoro timer</Txt>
             </View>
+            <Text style={{ color: colors.green, fontFamily: 'Inter_700Bold', fontWeight: '700' }}>Start →</Text>
           </Card>
-        ))}
+        </TouchableOpacity>
+
+        {/* Live rooms */}
+        <SectionHeader title="Live rooms" style={{ marginTop: Spacing.xl }} />
+        {live.length === 0 ? (
+          <EmptyState emoji="🌙" title="No live rooms right now" subtitle="Check back soon." />
+        ) : (
+          <View style={{ gap: Spacing.md }}>
+            {live.map((r) => (
+              <RoomCard key={r.id} room={r} onJoin={() => open(r)} onPress={() => open(r)} />
+            ))}
+          </View>
+        )}
+
+        {/* Coming up */}
+        <SectionHeader title="Coming up" style={{ marginTop: Spacing.xl }} />
+        <View style={{ gap: Spacing.md }}>
+          {scheduled.map((r) => (
+            <RoomCard key={r.id} room={r} onJoin={() => open(r)} onPress={() => open(r)} />
+          ))}
+        </View>
 
         {/* Leaderboard */}
-        <SectionHeader eyebrow="WEEKLY" title="Leaderboard" style={{ marginTop: Spacing.lg }} />
-        <Card>
-          {LEADERBOARD.map((entry, i) => (
-            <View key={entry.rank}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm }}>
-                <Text style={[Typography.bodyBold, { color: entry.rank <= 3 ? colors.yellow : colors.textMuted, width: 30 }]}>#{entry.rank}</Text>
-                <Avatar name={entry.name} size={32} style={{ marginRight: Spacing.md }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[Typography.body, { color: entry.isUser ? colors.green : colors.textPrimary, fontWeight: entry.isUser ? '700' : '400' }]}>{entry.name}{entry.isUser ? ' (You)' : ''}</Text>
-                </View>
-                <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>{entry.score}</Text>
-              </View>
-              {i < LEADERBOARD.length - 1 && <Divider style={{ marginVertical: 0 }} />}
-            </View>
-          ))}
+        <SectionHeader title="Your cohort — this week" style={{ marginTop: Spacing.xl }} />
+        <Card style={{ padding: Spacing.sm }}>
+          {LEADERBOARD.map((e) => <LeaderboardRow key={e.rank} entry={e} />)}
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

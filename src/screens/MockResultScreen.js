@@ -1,100 +1,91 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useTheme, Typography, Spacing, Radius } from '../theme';
-import { Card, SectionHeader, Btn, Badge, Divider } from '../components/common';
-import { MOCK_TESTS, STATS, MISTAKE_DNA } from '../data';
+import { View, ScrollView, Text } from 'react-native';
+import { useTheme } from '../theme';
+import { Spacing, Radius } from '../theme/tokens';
+import {
+  Screen, Txt, Eyebrow, Card, GreenCard, Btn, BackButton, SectionHeader, SubjectRow,
+} from '../components/common';
+import { MOCK_TESTS, MISTAKE_DNA, STATS } from '../data';
 
-function MistakeBar({ label, value, total, color, colors }) {
-  const pct = (value / total) * 100;
-  return (
-    <View style={{ marginBottom: Spacing.md }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs }}>
-        <Text style={[Typography.caption, { color: colors.textSecondary }]}>{label}</Text>
-        <Text style={[Typography.caption, { color: colors.textPrimary, fontWeight: '700' }]}>{value}</Text>
-      </View>
-      <View style={{ height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' }}>
-        <View style={{ height: '100%', width: `${pct}%`, backgroundColor: color, borderRadius: 4 }} />
-      </View>
-    </View>
-  );
-}
-
-function SubjectBar({ name, data, color, colors }) {
-  const pct = Math.round((data.score / data.total) * 100);
-  return (
-    <View style={{ marginBottom: Spacing.md }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.xs }}>
-        <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>{name}</Text>
-        <Text style={[Typography.caption, { color: colors.textSecondary }]}>{data.score}/{data.total}</Text>
-      </View>
-      <View style={{ height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' }}>
-        <View style={{ height: '100%', width: `${pct}%`, backgroundColor: color, borderRadius: 4 }} />
-      </View>
-      <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xs }}>
-        <Text style={[Typography.small, { color: colors.green }]}>{data.correct} correct</Text>
-        <Text style={[Typography.small, { color: colors.orange }]}>{data.wrong} wrong</Text>
-        <Text style={[Typography.small, { color: colors.textMuted }]}>{data.unattempted} skipped</Text>
-      </View>
-    </View>
-  );
-}
-
-export default function MockResultScreen({ route, navigation }) {
+function MistakeRow({ label, value, total, color }) {
   const { colors } = useTheme();
-  const mockId = route.params?.mockId || 1;
-  const mock = MOCK_TESTS.find((m) => m.id === mockId) || MOCK_TESTS[0];
-  const pct = Math.round((mock.score / mock.total) * 100);
+  const pct = Math.round((value / total) * 100);
+  return (
+    <View style={{ marginBottom: Spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, marginRight: 8 }} />
+          <Txt variant="h5">{label}</Txt>
+        </View>
+        <Txt variant="h5" color={colors.textSecondary}>{value}</Txt>
+      </View>
+      <View style={{ height: 5, backgroundColor: colors.bgCard2, borderRadius: 5, overflow: 'hidden' }}>
+        <View style={{ height: '100%', width: `${pct}%`, backgroundColor: color, borderRadius: 5 }} />
+      </View>
+    </View>
+  );
+}
+
+export default function MockResultScreen({ navigation, route }) {
+  const { colors } = useTheme();
+  const mockId = route.params?.mockId;
+  const mock = MOCK_TESTS.find((m) => m.id === mockId) || MOCK_TESTS.find((m) => m.completed);
+  const pct = ((mock.score / mock.totalMarks) * 100).toFixed(1);
+  const s = mock.subjectScores;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: Spacing.base, paddingBottom: 40 }}>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.goBack()} style={{ marginBottom: Spacing.md }}>
-          <Text style={[Typography.body, { color: colors.green }]}>{'< Back'}</Text>
-        </TouchableOpacity>
+    <Screen>
+      <ScrollView contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxxl }}>
+        <BackButton onPress={() => navigation.goBack()} label="Results" style={{ marginBottom: Spacing.lg }} />
+        <Txt variant="h1">{mock.title} Results</Txt>
 
-        <Text style={[Typography.h1, { color: colors.textPrimary, marginBottom: Spacing.lg }]}>{mock.name}</Text>
+        {/* Score hero */}
+        <GreenCard style={{ marginTop: Spacing.lg, alignItems: 'center' }}>
+          <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 44, letterSpacing: -2 }}>
+            {mock.score} <Text style={{ color: colors.textMuted, fontSize: 22 }}>/ {mock.totalMarks}</Text>
+          </Text>
+          <View style={{ flexDirection: 'row', gap: Spacing.xl, marginTop: Spacing.sm }}>
+            <Txt variant="h4" color={colors.textSecondary}>{pct}%</Txt>
+            <Txt variant="h4" color={colors.textSecondary}>{mock.timeTaken}</Txt>
+          </View>
+        </GreenCard>
 
-        {/* Score Card */}
-        <Card style={{ alignItems: 'center', marginBottom: Spacing.base, paddingVertical: Spacing.xl }}>
-          <Text style={[{ fontSize: 48, fontWeight: '800', color: colors.green }]}>{mock.score}</Text>
-          <Text style={[Typography.body, { color: colors.textSecondary }]}>out of {mock.total} ({pct}%)</Text>
-          <Divider style={{ width: '60%' }} />
-          <Text style={[Typography.caption, { color: colors.textMuted }]}>Time: {mock.timeTaken} / {mock.totalTime} min</Text>
+        {/* Rank */}
+        <Card style={{ marginTop: Spacing.lg }}>
+          <Eyebrow label="ALL-INDIA RANK" />
+          <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 34, letterSpacing: -1, marginTop: 4 }}>{mock.rank.toLocaleString('en-IN')}</Text>
+          <Txt variant="caption" color={colors.green} style={{ marginTop: 2 }}>↑ from 65,000</Txt>
+          <Txt variant="bodySmall" color={colors.textSecondary} style={{ marginTop: Spacing.sm }}>
+            Qualifying: {STATS.qualifyingColleges.join(' · ')}
+          </Txt>
         </Card>
 
-        {/* Rank Simulator */}
-        <Card style={{ marginBottom: Spacing.base }}>
-          <SectionHeader eyebrow="RANK PREDICTOR" title="Estimated AIR" />
-          <Text style={[{ fontSize: 40, fontWeight: '800', color: colors.orange, marginBottom: Spacing.sm }]}>#{mock.rank.toLocaleString()}</Text>
-          <Badge label={`${mock.percentile}th percentile`} color={colors.green} style={{ marginBottom: Spacing.md }} />
-          <Text style={[Typography.caption, { color: colors.textSecondary, marginBottom: Spacing.sm }]}>Qualifying Colleges</Text>
-          {STATS.qualifyingColleges.map((c, i) => (
-            <Text key={i} style={[Typography.body, { color: colors.textPrimary, marginBottom: 2 }]}>  {c}</Text>
-          ))}
+        {/* Subject breakdown */}
+        <SectionHeader title="Subject breakdown" style={{ marginTop: Spacing.xl }} />
+        <Card>
+          <SubjectRow name="Biology" value={s.biology} max={360} color="biology" />
+          <SubjectRow name="Physics" value={s.physics} max={180} color="physics" />
+          <SubjectRow name="Chemistry" value={s.chemistry} max={180} color="chemistry" style={{ marginBottom: 0 }} />
         </Card>
 
         {/* Mistake DNA */}
-        <Card style={{ marginBottom: Spacing.base }}>
-          <SectionHeader eyebrow="DIAGNOSTICS" title="Mistake DNA" />
-          <MistakeBar label="Concept Gaps" value={MISTAKE_DNA.conceptGaps} total={MISTAKE_DNA.total} color={colors.orange} colors={colors} />
-          <MistakeBar label="Silly Mistakes" value={MISTAKE_DNA.sillyMistakes} total={MISTAKE_DNA.total} color={colors.yellow} colors={colors} />
-          <MistakeBar label="Time Pressure" value={MISTAKE_DNA.timePressure} total={MISTAKE_DNA.total} color={colors.purple} colors={colors} />
-          <MistakeBar label="Unattempted" value={MISTAKE_DNA.unattempted} total={MISTAKE_DNA.total} color={colors.textMuted} colors={colors} />
+        <SectionHeader title="Mistake DNA" style={{ marginTop: Spacing.xl }} />
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: Spacing.md }}>
+            <Txt variant="h5" color={colors.textMuted}>Across {MISTAKE_DNA.total} mistakes</Txt>
+            <Txt variant="h5" color={colors.green}>{mock.title}</Txt>
+          </View>
+          <MistakeRow label="Concept gaps" value={MISTAKE_DNA.conceptGaps} total={MISTAKE_DNA.total} color={colors.orange} />
+          <MistakeRow label="Silly mistakes" value={MISTAKE_DNA.sillyMistakes} total={MISTAKE_DNA.total} color={colors.purple} />
+          <MistakeRow label="Time pressure" value={MISTAKE_DNA.timePressure} total={MISTAKE_DNA.total} color={colors.blue} />
+          <MistakeRow label="Unattempted" value={MISTAKE_DNA.unattempted} total={MISTAKE_DNA.total} color={colors.textMuted} />
         </Card>
 
-        {/* Subject Breakdown */}
-        <Card style={{ marginBottom: Spacing.xl }}>
-          <SectionHeader eyebrow="BREAKDOWN" title="Subject-wise" />
-          <SubjectBar name="Physics" data={mock.physics} color={colors.purple} colors={colors} />
-          <SubjectBar name="Chemistry" data={mock.chemistry} color={colors.blue} colors={colors} />
-          <SubjectBar name="Biology" data={mock.biology} color={colors.green} colors={colors} />
-        </Card>
-
-        <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-          <Btn title="Review Answers" variant="outline" onPress={() => {}} style={{ flex: 1 }} />
-          <Btn title="Share" onPress={() => {}} style={{ flex: 1 }} />
+        <View style={{ marginTop: Spacing.xl, gap: Spacing.md }}>
+          <Btn label="Review all answers" onPress={() => navigation.navigate('QuestionSession', { chapterId: null, mode: 'review' })} />
+          <Btn label="Share result card" variant="outline" onPress={() => navigation.navigate('ShareResult', { mockId: mock.id })} />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

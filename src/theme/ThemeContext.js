@@ -1,40 +1,38 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors } from './tokens';
-
-const THEME_KEY = '@scolrly_theme';
+import { Palette, DarkTheme, LightTheme } from './tokens';
+import { Storage, KEYS } from '../utils/storage';
 
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(THEME_KEY).then((val) => {
-      if (val !== null) setIsDark(val === 'dark');
+    Storage.get(KEYS.theme).then((val) => {
+      if (val === 'light') setIsDark(false);
+      else if (val === 'dark') setIsDark(true);
+      setReady(true);
     });
   }, []);
 
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    AsyncStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+  const setTheme = (dark) => {
+    setIsDark(dark);
+    Storage.set(KEYS.theme, dark ? 'dark' : 'light');
   };
 
+  const toggleTheme = () => setTheme(!isDark);
+
+  const scheme = isDark ? DarkTheme : LightTheme;
+
+  // All brand/accent tokens are theme-independent; surface tokens flip.
   const colors = {
-    ...Colors.brand,
-    ...Colors.accent,
-    bg: isDark ? Colors.dark.bg : Colors.light.bg,
-    card: isDark ? Colors.dark.card : Colors.light.card,
-    card2: isDark ? Colors.dark.card2 : Colors.light.card2,
-    border: isDark ? Colors.dark.border : Colors.light.border,
-    textPrimary: isDark ? Colors.dark.textPrimary : Colors.light.textPrimary,
-    textSecondary: isDark ? Colors.dark.textSecondary : Colors.light.textSecondary,
-    textMuted: isDark ? Colors.dark.textMuted : Colors.light.textMuted,
+    ...Palette,
+    ...scheme,
   };
 
   return (
-    <ThemeContext.Provider value={{ colors, isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ colors, isDark, ready, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

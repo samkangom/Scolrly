@@ -1,80 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useTheme, Typography, Spacing } from '../theme';
-import { Card, SectionHeader, Btn, Avatar, Badge, Divider } from '../components/common';
-import { STUDY_ROOMS, LEADERBOARD } from '../data';
+import { View, ScrollView, TouchableOpacity, Text } from 'react-native';
+import { useTheme } from '../theme';
+import { Spacing, Radius } from '../theme/tokens';
+import {
+  Screen, Txt, Eyebrow, Card, GreenCard, Avatar, Badge, LiveBadge, StatusDot,
+  SectionHeader, LeaderboardRow,
+} from '../components/common';
+import { STUDY_ROOMS, LEADERBOARD, USER } from '../data';
+import { Haptic } from '../utils/haptics';
 
-export default function ActiveRoomScreen({ route, navigation }) {
-  const { colors } = useTheme();
-  const roomId = route.params?.roomId || 1;
-  const room = STUDY_ROOMS.find((r) => r.id === roomId) || STUDY_ROOMS[0];
-
-  const [timeLeft, setTimeLeft] = useState(room.timeRemaining || 2820);
-
+function useSessionTimer(start = 47 * 60 + 23) {
+  const [secs, setSecs] = useState(start);
   useEffect(() => {
-    const id = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
+    const id = setInterval(() => setSecs((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(id);
   }, []);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
-  const mins = Math.floor(timeLeft / 60);
-  const secs = timeLeft % 60;
+export default function ActiveRoomScreen({ navigation, route }) {
+  const { colors } = useTheme();
+  const roomId = route.params?.roomId;
+  const room = STUDY_ROOMS.find((r) => r.id === roomId) || STUDY_ROOMS[0];
+  const timer = useSessionTimer();
 
-  const members = LEADERBOARD.slice(0, room.members > 5 ? 5 : room.members || 3).map((l) => ({
-    ...l,
-    chapter: room.chapter,
-    status: Math.random() > 0.3 ? 'active' : 'idle',
-  }));
+  const members = [
+    { initials: USER.initials, color: 'green', name: 'You', chapter: 'Human Physiology', status: 'studying', you: true },
+    ...room.members,
+  ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.base }}>
-        <View style={{ flex: 1 }}>
-          <Text style={[Typography.h2, { color: colors.textPrimary }]}>{room.name}</Text>
-          <Text style={[Typography.small, { color: colors.textMuted }]}>{room.members} members</Text>
+    <Screen>
+      <ScrollView contentContainerStyle={{ padding: Spacing.lg, paddingBottom: Spacing.xxxl }}>
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={8}>
+            <Text style={{ color: colors.green, fontSize: 22 }}>←</Text>
+          </TouchableOpacity>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Txt variant="h4" numberOfLines={1}>{room.title}</Txt>
+            <LiveBadge style={{ marginTop: 4 }} />
+          </View>
+          <TouchableOpacity onPress={() => { Haptic.medium(); navigation.goBack(); }}
+            style={{ backgroundColor: colors.orangeGlow, borderRadius: Radius.pill, paddingHorizontal: Spacing.md, paddingVertical: 6, borderWidth: 1, borderColor: colors.orange + '40' }}>
+            <Text style={{ color: colors.orange, fontFamily: 'Inter_700Bold', fontWeight: '700', fontSize: 12 }}>Leave</Text>
+          </TouchableOpacity>
         </View>
-        <Btn title="Leave" variant="outline" onPress={() => navigation.goBack()} style={{ paddingVertical: Spacing.xs, paddingHorizontal: Spacing.base, borderColor: colors.orange }} textStyle={{ color: colors.orange }} />
-      </View>
 
-      <ScrollView contentContainerStyle={{ padding: Spacing.base, paddingTop: 0, paddingBottom: 40 }}>
-        {/* Timer */}
-        <Card style={{ alignItems: 'center', marginBottom: Spacing.xl, paddingVertical: Spacing.xl }}>
-          <Text style={[Typography.eyebrow, { color: colors.green, marginBottom: Spacing.sm }]}>TIME REMAINING</Text>
-          <Text style={[{ fontSize: 52, fontWeight: '800', color: colors.textPrimary, fontVariant: ['tabular-nums'] }]}>
-            {String(mins).padStart(2, '0')}:{String(secs).padStart(2, '0')}
-          </Text>
-          <Text style={[Typography.caption, { color: colors.textMuted, marginTop: Spacing.xs }]}>{room.chapter}</Text>
-        </Card>
+        {/* Session timer */}
+        <GreenCard style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View>
+            <Eyebrow label="YOUR SESSION" />
+            <Txt variant="h3" style={{ marginTop: 4 }}>Deep Focus</Txt>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 36, letterSpacing: -1 }}>{timer}</Text>
+            <Txt variant="caption" color={colors.textMuted}>remaining</Txt>
+          </View>
+        </GreenCard>
 
         {/* Members */}
-        <SectionHeader eyebrow="MEMBERS" title="Study Group" />
-        <Card style={{ marginBottom: Spacing.xl }}>
+        <SectionHeader title={`Studying now · ${room.totalMembers}`} style={{ marginTop: Spacing.xl }} />
+        <Card style={{ padding: Spacing.sm }}>
           {members.map((m, i) => (
-            <View key={m.rank}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm }}>
-                <Avatar name={m.name} size={36} style={{ marginRight: Spacing.md }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>{m.name}</Text>
-                  <Text style={[Typography.small, { color: colors.textMuted }]}>{m.chapter}</Text>
-                </View>
-                <Badge label={m.status === 'active' ? 'Active' : 'Idle'} color={m.status === 'active' ? colors.green : colors.textMuted} />
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm, paddingHorizontal: Spacing.sm }}>
+              <Avatar initials={m.you ? 'YOU' : m.initials} color={m.color} size={36} />
+              <View style={{ flex: 1, marginLeft: Spacing.md }}>
+                <Txt variant="h5">{m.name}</Txt>
+                <Txt variant="caption" color={colors.textMuted} style={{ marginTop: 2 }}>{m.chapter}</Txt>
               </View>
-              {i < members.length - 1 && <Divider style={{ marginVertical: 0 }} />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <StatusDot status={m.status} />
+                <Txt variant="caption" color={m.status === 'break' ? colors.yellow : colors.green} style={{ textTransform: 'capitalize' }}>{m.status}</Txt>
+              </View>
             </View>
           ))}
         </Card>
 
-        {/* Leaderboard */}
-        <SectionHeader eyebrow="ROOM" title="Leaderboard" />
-        <Card>
-          {members.map((m, i) => (
-            <View key={m.rank} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm }}>
-              <Text style={[Typography.bodyBold, { color: i < 3 ? colors.yellow : colors.textMuted, width: 30 }]}>#{i + 1}</Text>
-              <Text style={[Typography.body, { color: colors.textPrimary, flex: 1 }]}>{m.name}</Text>
-              <Text style={[Typography.bodyBold, { color: colors.textPrimary }]}>{m.score}</Text>
-            </View>
-          ))}
+        {/* Cohort leaderboard */}
+        <SectionHeader title="Cohort leaderboard" style={{ marginTop: Spacing.xl }} />
+        <Card style={{ padding: Spacing.sm }}>
+          {LEADERBOARD.map((e) => <LeaderboardRow key={e.rank} entry={e} />)}
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
