@@ -1,23 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import StatCard from "@/components/StatCard";
+import { api, type Overview } from "@/lib/api";
 
-const stats = [
-  { label: "Total Users", value: "12,847", change: "12.5%", changeType: "up" as const, icon: "👥" },
-  { label: "Daily Active Users", value: "3,421", change: "8.2%", changeType: "up" as const, icon: "📈" },
-  { label: "Questions in Bank", value: "2,847", change: "3.1%", changeType: "up" as const, icon: "❓" },
-  { label: "Active Rooms", value: "2", change: "1", changeType: "down" as const, icon: "🏠" },
-];
-
-const failedChapters = [
-  { name: "Organic Chemistry - Reactions", pct: 78 },
-  { name: "Human Physiology - Nervous System", pct: 72 },
-  { name: "Genetics - Molecular Basis", pct: 68 },
-  { name: "Electrochemistry", pct: 65 },
-  { name: "Thermodynamics", pct: 61 },
-  { name: "Cell Biology - Division", pct: 58 },
-];
-
+// Funnel stays illustrative until subscriptions go live.
 const funnelSteps = [
   { label: "App Install", value: 12847, pct: 100 },
   { label: "Sign Up", value: 9842, pct: 76 },
@@ -27,95 +14,115 @@ const funnelSteps = [
 ];
 
 export default function Dashboard() {
+  const [data, setData] = useState<Overview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get<Overview>("admin/overview").then(setData).catch((e) => setError(e.message));
+  }, []);
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-text-primary">Dashboard Overview</h1>
+        <div className="bg-card border border-danger/40 rounded-xl p-5 text-sm text-danger">
+          Couldn&apos;t reach the Scolrly API: {error}
+        </div>
+      </div>
+    );
+  }
+
+  const s = data?.stats;
+  const stats = [
+    { label: "Total Students", value: s ? s.users.toLocaleString() : "—", change: "live", changeType: "up" as const, icon: "👥" },
+    { label: "Active Today", value: s ? s.activeToday.toLocaleString() : "—", change: "live", changeType: "up" as const, icon: "📈" },
+    { label: "Questions in Bank", value: s ? s.questions.toLocaleString() : "—", change: "live", changeType: "up" as const, icon: "❓" },
+    { label: "Live Rooms", value: s ? s.liveRooms.toLocaleString() : "—", change: "live", changeType: "up" as const, icon: "🏠" },
+  ];
+
+  const maxAttempts = Math.max(1, ...(data?.activity.map((d) => d.attempts) ?? [1]));
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-text-primary">Dashboard Overview</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-text-primary">Dashboard Overview</h1>
+        {data && (
+          <span className="flex items-center gap-2 text-xs text-brand">
+            <span className="w-2 h-2 rounded-full bg-brand animate-pulse" /> Live from API
+          </span>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <StatCard key={s.label} {...s} />
+        {stats.map((st) => (
+          <StatCard key={st.label} {...st} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { label: "Attempts Today", value: s?.attemptsToday ?? "—", icon: "✏️" },
+          { label: "Doubts Asked", value: s?.doubts ?? "—", icon: "💬" },
+          { label: "Mock Results", value: s?.mockResults ?? "—", icon: "📝" },
+        ].map((m) => (
+          <div key={m.label} className="bg-card rounded-xl border border-border-dark p-4 flex items-center gap-3">
+            <span className="text-xl">{m.icon}</span>
+            <div>
+              <p className="text-xl font-bold text-text-primary">{m.value}</p>
+              <p className="text-xs text-text-secondary">{m.label}</p>
+            </div>
+          </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* DAU/MAU Trend */}
+        {/* Activity trend (live) */}
         <div className="bg-card rounded-xl border border-border-dark p-5">
-          <h3 className="text-sm font-semibold text-text-secondary mb-4">DAU / MAU Trend (Last 7 Days)</h3>
+          <h3 className="text-sm font-semibold text-text-secondary mb-4">Question Attempts (Last 7 Days)</h3>
           <div className="h-48 flex items-end gap-3">
-            {[
-              { day: "Mon", value: 2800 },
-              { day: "Tue", value: 3100 },
-              { day: "Wed", value: 2950 },
-              { day: "Thu", value: 3200 },
-              { day: "Fri", value: 3421 },
-              { day: "Sat", value: 3350 },
-              { day: "Sun", value: 3500 },
-            ].map((d) => (
-              <div key={d.day} className="flex-1 flex flex-col items-center justify-end h-full group">
-                <span className="text-[10px] text-[#9A9A9A] mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{d.value.toLocaleString()}</span>
+            {(data?.activity ?? []).map((d, i) => (
+              <div key={`${d.day}-${i}`} className="flex-1 flex flex-col items-center justify-end h-full group">
+                <span className="text-[10px] text-[#9A9A9A] mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {d.attempts} attempts · {d.activeUsers} students
+                </span>
                 <div
                   className="w-full bg-[#1DB954]/60 rounded-t-md hover:bg-[#1DB954] transition-colors"
-                  style={{ height: `${(d.value / 3500) * 100}%` }}
+                  style={{ height: `${Math.max(2, (d.attempts / maxAttempts) * 100)}%` }}
                 />
                 <span className="text-[10px] text-[#6B6B6B] mt-2">{d.day}</span>
               </div>
             ))}
+            {!data && <p className="text-xs text-text-muted m-auto">Loading…</p>}
           </div>
         </div>
 
-        {/* Retention Curve */}
-        <div className="bg-card rounded-xl border border-border-dark p-5">
-          <h3 className="text-sm font-semibold text-text-secondary mb-4">Retention Curve</h3>
-          <div className="h-48 relative">
-            <svg viewBox="0 0 300 150" className="w-full h-full">
-              <polyline
-                fill="none"
-                stroke="#1DB954"
-                strokeWidth="2"
-                points="0,10 30,25 60,45 90,60 120,72 150,82 180,90 210,97 240,103 270,108 300,112"
-              />
-              <polyline
-                fill="url(#retGrad)"
-                stroke="none"
-                points="0,10 30,25 60,45 90,60 120,72 150,82 180,90 210,97 240,103 270,108 300,112 300,150 0,150"
-              />
-              <defs>
-                <linearGradient id="retGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1DB954" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#1DB954" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <div className="flex justify-between text-xs text-text-muted mt-2">
-            <span>Day 1</span><span>Day 7</span><span>Day 30</span>
-          </div>
-        </div>
-
-        {/* Most Failed Chapters */}
+        {/* Most Failed Chapters (live) */}
         <div className="bg-card rounded-xl border border-border-dark p-5">
           <h3 className="text-sm font-semibold text-text-secondary mb-4">Most Failed Chapters</h3>
           <div className="space-y-3">
-            {failedChapters.map((ch) => (
-              <div key={ch.name}>
+            {(data?.failedChapters ?? []).map((ch) => (
+              <div key={ch.id}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-text-primary truncate mr-2">{ch.name}</span>
-                  <span className="text-accent-orange">{ch.pct}%</span>
+                  <span className="text-text-primary truncate mr-2">
+                    {ch.name}
+                    <span className="text-text-muted ml-2 capitalize">{ch.subject}</span>
+                    {ch.live && <span className="text-brand ml-2">● live data</span>}
+                  </span>
+                  <span className="text-accent-orange">{ch.failPct}%</span>
                 </div>
                 <div className="h-2 bg-card2 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-accent-orange rounded-full"
-                    style={{ width: `${ch.pct}%` }}
-                  />
+                  <div className="h-full bg-accent-orange rounded-full" style={{ width: `${ch.failPct}%` }} />
                 </div>
               </div>
             ))}
+            {!data && <p className="text-xs text-text-muted">Loading…</p>}
           </div>
         </div>
 
-        {/* Subscription Funnel */}
-        <div className="bg-card rounded-xl border border-border-dark p-5">
-          <h3 className="text-sm font-semibold text-text-secondary mb-4">Subscription Funnel</h3>
+        {/* Subscription Funnel (illustrative until payments launch) */}
+        <div className="bg-card rounded-xl border border-border-dark p-5 lg:col-span-2">
+          <h3 className="text-sm font-semibold text-text-secondary mb-1">Subscription Funnel</h3>
+          <p className="text-[10px] text-text-muted mb-4">Sample data — activates with payments</p>
           <div className="space-y-2">
             {funnelSteps.map((step, i) => (
               <div key={step.label} className="flex items-center gap-3">

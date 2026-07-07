@@ -366,6 +366,106 @@ app.get('/api/leaderboard', requireAuth, (req, res) => {
 });
 
 // ── Admin (for the Next.js dashboard) ────────────────────────────────────────
+// Dashboard home: headline stats, cohort-wide weakest chapters, 7-day activity.
+app.get('/api/admin/overview', requireAdmin, (_req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const stats = {
+    users: db.prepare("SELECT COUNT(*) c FROM users WHERE role = 'student'").get().c,
+    activeToday: db.prepare(
+      'SELECT COUNT(DISTINCT user_id) c FROM attempts WHERE created_at >= ?'
+    ).get(today).c,
+    questions: db.prepare('SELECT COUNT(*) c FROM questions').get().c,
+    attemptsToday: db.prepare('SELECT COUNT(*) c FROM attempts WHERE created_at >= ?').get(today).c,
+    doubts: db.prepare('SELECT COUNT(*) c FROM doubts').get().c,
+    mockResults: db.prepare('SELECT COUNT(*) c FROM mock_results').get().c,
+    liveRooms: db.prepare("SELECT COUNT(*) c FROM rooms WHERE status = 'live'").get().c,
+  };
+
+  // Cohort failure rate per chapter: real attempts blended over the seeded
+  // baseline, mirroring the per-student logic in chaptersFor().
+  const cohort = db.prepare(
+    'SELECT chapter_id, COUNT(*) n, SUM(is_correct) c FROM attempts GROUP BY chapter_id'
+  ).all().reduce((m, r) => ((m[r.chapter_id] = r), m), {});
+  const failedChapters = db.prepare('SELECT * FROM chapters').all()
+    .map((ch) => {
+      const s = cohort[ch.id];
+      const accuracy = s && s.n >= 5 ? Math.round((s.c / s.n) * 100) : ch.base_accuracy;
+      return { id: ch.id, name: ch.name, subject: ch.subject, failPct: 100 - accuracy, live: !!(s && s.n >= 5) };
+    })
+    .sort((a, b) => b.failPct - a.failPct)
+    .slice(0, 6);
+
+  const activity = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(Date.now() - i * 86400000);
+    const key = day.toISOString().slice(0, 10);
+    const next = new Date(day.getTime() + 86400000).toISOString().slice(0, 10);
+    activity.push({
+      day: day.toLocaleDateString('en-US', { weekday: 'short' }),
+      attempts: db.prepare('SELECT COUNT(*) c FROM attempts WHERE created_at >= ? AND created_at < ?').get(key, next).c,
+      activeUsers: db.prepare('SELECT COUNT(DISTINCT user_id) c FROM attempts WHERE created_at >= ? AND created_at < ?').get(key, next).c,
+    });
+  }
+  res.json({ stats, failedChapters, activity });
+});
+
+app.get('/api/admin/users', requireAdmin, (_req, res) => {
+  const users = db.prepare(
+    `SELECT u.*, COUNT(a.id) attempts, COALESCE(SUM(a.is_correct),0) correct,
+            MAX(a.created_at) last_attempt
+     FROM users u LEFT JOIN attempts a ON a.user_id = u.id
+     WHERE u.role = 'student' GROUP BY u.id ORDER BY u.created_at DESC`
+  ).all();
+  const mocksBy = db.prepare(
+    'SELECT user_id, COUNT(*) c FROM mock_results GROUP BY user_id'
+  ).all().reduce((m, r) => ((m[r.user_id] = r.c), m), {});
+  res.json({
+    users: users.map((u) => ({
+      id: u.id, name: u.name, email: u.email || `device: ${(u.device_id || '').slice(0, 14)}…`,
+      status: u.status, coaching: u.coaching, streak: u.streak_days,
+      questionsAttempted: u.attempts,
+      accuracy: u.attempts ? Math.round((u.correct / u.attempts) * 100) : 0,
+      testsCompleted: mocksBy[u.id] || 0,
+      lastActive: u.last_attempt || u.created_at,
+      joined: u.created_at,
+    })),
+  });
+});
+
+// Chapter health: content coverage per chapter for the content team.
+app.get('/api/admin/chapters', requireAdmin, (_req, res) => {
+  const qCounts = db.prepare('SELECT chapter_id, COUNT(*) c FROM questions GROUP BY chapter_id')
+    .all().reduce((m, r) => ((m[r.chapter_id] = r.c), m), {});
+  const cardCounts = db.prepare('SELECT chapter_id, COUNT(*) c FROM concept_cards GROUP BY chapter_id')
+    .all().reduce((m, r) => ((m[r.chapter_id] = r.c), m), {});
+  res.json({
+    chapters: db.prepare('SELECT * FROM chapters').all().map((ch) => {
+      const q = qCounts[ch.id] || 0;
+      const cards = cardCounts[ch.id] || 0;
+      // Coverage target for the pilot: 45 questions + 1 concept card per chapter.
+      const completeness = Math.min(100, Math.round((q / 45) * 80 + (cards > 0 ? 20 : 0)));
+      return {
+        id: ch.id, name: ch.name, subject: ch.subject,
+        questionCount: q, conceptCards: cards, hasConceptCards: cards > 0,
+        pyqCount: ch.pyq_count, completeness,
+      };
+    }),
+  });
+});
+
+app.get('/api/admin/doubts', requireAdmin, (_req, res) => {
+  const rows = db.prepare(
+    `SELECT d.*, u.name user_name FROM doubts d JOIN users u ON u.id = d.user_id
+     ORDER BY d.created_at DESC LIMIT 50`
+  ).all();
+  res.json({
+    doubts: rows.map((d) => ({
+      id: d.id, user: d.user_name, question: d.question, subject: d.subject,
+      answer: d.answer, date: d.created_at,
+    })),
+  });
+});
+
 app.get('/api/admin/stats', requireAdmin, (_req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   res.json({
