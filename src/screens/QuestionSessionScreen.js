@@ -8,11 +8,13 @@ import {
 import { CHAPTERS, QUESTIONS } from '../data';
 import { useApp } from '../context/AppContext';
 import { Haptic } from '../utils/haptics';
+import { api } from '../api/client';
 
 export default function QuestionSessionScreen({ navigation, route }) {
   const { colors } = useTheme();
   const { markAnswered } = useApp();
   const chapterId = route.params?.chapterId;
+  const mode = route.params?.mode || 'practice';
   const chapter = CHAPTERS.find((c) => c.id === chapterId);
 
   // Build a session pool: chapter questions padded with others to feel substantial.
@@ -26,6 +28,7 @@ export default function QuestionSessionScreen({ navigation, route }) {
   const [picked, setPicked] = useState(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [done, setDone] = useState(false);
+  const shownAt = React.useRef(Date.now());
 
   const q = pool[idx];
   const total = pool.length;
@@ -36,13 +39,25 @@ export default function QuestionSessionScreen({ navigation, route }) {
     setPicked(id);
     const ok = id === q.correct;
     if (ok) { setCorrectCount((c) => c + 1); Haptic.success(); } else Haptic.error();
-    markAnswered(q.id);
+    markAnswered(q.id, id, Date.now() - shownAt.current);
   };
 
   const next = () => {
-    if (idx + 1 >= total) { setDone(true); Haptic.medium(); return; }
+    if (idx + 1 >= total) {
+      setDone(true); Haptic.medium();
+      // Mock sessions post a scaled score so results feed the Progress trend.
+      if (mode === 'mock') {
+        const finalCorrect = correctCount;
+        api.post('/api/mocks/m7/submit', {
+          score: Math.round((finalCorrect / total) * 720),
+          accuracy: Math.round((finalCorrect / total) * 100),
+        });
+      }
+      return;
+    }
     setIdx((i) => i + 1);
     setPicked(null);
+    shownAt.current = Date.now();
   };
 
   const optionStyle = (id) => {

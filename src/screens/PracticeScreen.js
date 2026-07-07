@@ -8,15 +8,29 @@ import {
   Screen, Txt, SectionHeader, SubjectTabs, ChapterRow, StatPill, Skeleton, EmptyState, IconBox, Card,
 } from '../components/common';
 import { useChapters } from '../hooks/useChapters';
+import { useApi } from '../hooks/useApi';
+import { useApp } from '../context/AppContext';
 import { SUBJECTS } from '../data';
 import { Haptic } from '../utils/haptics';
 
 export default function PracticeScreen({ navigation }) {
   const { colors } = useTheme();
+  const { online } = useApp();
   const [subject, setSubject] = useState('biology');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { chapters, fixCount, reviseCount, strongCount } = useChapters(subject);
+  const local = useChapters(subject);
+  const { data: serverData, refresh } =
+    useApi(`/api/chapters?subject=${subject}`, null, [online]);
+
+  // Server chapters blend the student's own attempts into accuracy; prefer
+  // them when available, fall back to the bundled baseline offline.
+  const chapters = serverData?.chapters
+    ? [...serverData.chapters].sort((a, b) => a.accuracy - b.accuracy)
+    : local.chapters;
+  const fixCount = chapters.filter((c) => c.status === 'fix').length;
+  const reviseCount = chapters.filter((c) => c.status === 'revise').length;
+  const strongCount = chapters.filter((c) => c.status === 'strong').length;
 
   React.useEffect(() => {
     setLoading(true);
@@ -26,8 +40,8 @@ export default function PracticeScreen({ navigation }) {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true); Haptic.light();
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    refresh().finally(() => setTimeout(() => setRefreshing(false), 400));
+  }, [refresh]);
 
   const subjName = SUBJECTS.find((s) => s.id === subject)?.name;
 

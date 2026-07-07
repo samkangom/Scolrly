@@ -7,6 +7,7 @@ import {
   CountdownBox, MissionCard, ScorePill, ProgressBar, IconBox, Skeleton,
 } from '../components/common';
 import { useApp } from '../context/AppContext';
+import { useApi } from '../hooks/useApi';
 import { STATS, DAILY_MISSIONS, SUBJECTS, QUESTIONS } from '../data';
 import { Haptic } from '../utils/haptics';
 
@@ -19,10 +20,13 @@ function greeting() {
 
 export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
-  const { profile, streak } = useApp();
+  const { profile, streak, online } = useApp();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pyqRevealed, setPyqRevealed] = useState(false);
+  const { data: missionData, refresh: refreshMissions } =
+    useApi('/api/missions', { missions: DAILY_MISSIONS }, [online]);
+  const missions = missionData.missions;
 
   React.useEffect(() => {
     const t = setTimeout(() => setLoading(false), 650);
@@ -32,8 +36,8 @@ export default function HomeScreen({ navigation }) {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     Haptic.light();
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    refreshMissions().finally(() => setTimeout(() => setRefreshing(false), 400));
+  }, [refreshMissions]);
 
   const firstName = profile.name.split(' ')[0];
   const pyq = QUESTIONS[2];
@@ -76,7 +80,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         ) : (
           <View style={{ gap: Spacing.sm }}>
-            {DAILY_MISSIONS.map((m) => (
+            {missions.map((m) => (
               <MissionCard key={m.title} mission={m}
                 onPress={() => navigation.navigate('Practice', { screen: 'ChapterDetail', params: { chapterId: m.chapter } })} />
             ))}

@@ -40,3 +40,7 @@ yarn-error.*
 /ios
 /android
 .next/
+
+# API server
+server/node_modules/
+server/data/

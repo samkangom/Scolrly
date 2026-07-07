@@ -10,8 +10,14 @@ import {
 } from '../components/common';
 import { DOUBT_HISTORY } from '../data';
 import { Haptic } from '../utils/haptics';
+import { api } from '../api/client';
 
 const SUBJECT_OPTS = ['All', 'Biology', 'Physics', 'Chemistry'];
+
+const FALLBACK_ANSWER = {
+  text: "Break the problem into what's asked vs. what's given, identify the governing NCERT principle, then apply the relevant formula step by step. (You're offline — your doubt will be answered in full when you reconnect.)",
+  ncertRef: 'NCERT — general reference',
+};
 
 export default function DoubtDropScreen({ navigation }) {
   const { colors } = useTheme();
@@ -19,20 +25,25 @@ export default function DoubtDropScreen({ navigation }) {
   const [subject, setSubject] = useState('All');
   const [state, setState] = useState('idle'); // idle | loading | answered
   const [answer, setAnswer] = useState(null);
+  const [history, setHistory] = useState(DOUBT_HISTORY);
 
-  const submit = () => {
+  React.useEffect(() => {
+    api.get('/api/doubts').then((r) => {
+      if (r?.doubts?.length) setHistory(r.doubts);
+    });
+  }, [state]);
+
+  const submit = async () => {
     if (!text.trim()) return;
     Keyboard.dismiss();
     Haptic.light();
     setState('loading');
-    setTimeout(() => {
-      setAnswer({
-        text: "Great question! Based on NCERT, here's the key idea: break the problem into what's asked vs. what's given, identify the governing principle, then apply the relevant formula step by step. This doubt maps to a high-frequency PYQ concept — expect a variant in your next mock.",
-        ncertRef: 'NCERT reference · Ch 4',
-      });
-      setState('answered');
-      Haptic.success();
-    }, 1600);
+    const res = await api.post('/api/doubts', { question: text.trim(), subject }, { timeout: 10000 });
+    setAnswer(res
+      ? { text: res.answer, ncertRef: res.ncertRef }
+      : FALLBACK_ANSWER);
+    setState('answered');
+    Haptic.success();
   };
 
   return (
@@ -97,11 +108,11 @@ export default function DoubtDropScreen({ navigation }) {
 
               {/* History */}
               <SectionHeader title="Previous doubts" style={{ marginTop: Spacing.xl }} />
-              {DOUBT_HISTORY.length === 0 ? (
+              {history.length === 0 ? (
                 <EmptyState emoji="💭" title="No doubts yet" subtitle="Ask your first question above." />
               ) : (
                 <View style={{ gap: Spacing.sm }}>
-                  {DOUBT_HISTORY.map((d) => <DoubtCard key={d.id} doubt={d} />)}
+                  {history.map((d) => <DoubtCard key={d.id} doubt={d} />)}
                 </View>
               )}
             </ScrollView>

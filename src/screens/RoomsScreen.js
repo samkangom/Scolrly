@@ -7,19 +7,33 @@ import {
 } from '../components/common';
 import { STUDY_ROOMS, LEADERBOARD } from '../data';
 import { Haptic } from '../utils/haptics';
+import { api } from '../api/client';
+import { useApi } from '../hooks/useApi';
+import { useApp } from '../context/AppContext';
 
 export default function RoomsScreen({ navigation }) {
   const { colors } = useTheme();
+  const { online } = useApp();
   const [refreshing, setRefreshing] = useState(false);
-  const live = STUDY_ROOMS.filter((r) => r.status === 'live');
-  const scheduled = STUDY_ROOMS.filter((r) => r.status === 'scheduled');
+  const { data: roomData, refresh: refreshRooms } =
+    useApi('/api/rooms', { rooms: STUDY_ROOMS }, [online]);
+  const { data: lbData, refresh: refreshLb } =
+    useApi('/api/leaderboard', { leaderboard: LEADERBOARD }, [online]);
+  const rooms = roomData.rooms;
+  const leaderboard = lbData.leaderboard;
+  const live = rooms.filter((r) => r.status === 'live');
+  const scheduled = rooms.filter((r) => r.status === 'scheduled');
 
   const onRefresh = useCallback(() => {
     setRefreshing(true); Haptic.light();
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    Promise.all([refreshRooms(), refreshLb()])
+      .finally(() => setTimeout(() => setRefreshing(false), 400));
+  }, [refreshRooms, refreshLb]);
 
-  const open = (room) => navigation.navigate('ActiveRoom', { roomId: room.id });
+  const open = (room) => {
+    api.post(`/api/rooms/${room.id}/join`); // membership sync, fire-and-forget
+    navigation.navigate('ActiveRoom', { roomId: room.id });
+  };
 
   return (
     <Screen>
@@ -70,7 +84,7 @@ export default function RoomsScreen({ navigation }) {
         {/* Leaderboard */}
         <SectionHeader title="Your cohort — this week" style={{ marginTop: Spacing.xl }} />
         <Card style={{ padding: Spacing.sm }}>
-          {LEADERBOARD.map((e) => <LeaderboardRow key={e.rank} entry={e} />)}
+          {leaderboard.map((e) => <LeaderboardRow key={e.rank} entry={e} />)}
         </Card>
       </ScrollView>
     </Screen>

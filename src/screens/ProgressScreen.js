@@ -7,16 +7,17 @@ import {
 } from '../components/common';
 import { STATS, MISTAKE_DNA, SCORE_TREND, WEAKEST_CHAPTERS, SUBJECTS } from '../data';
 import { useApp } from '../context/AppContext';
+import { useApi } from '../hooks/useApi';
 import { Haptic } from '../utils/haptics';
 
-function ScoreTrendChart() {
+function ScoreTrendChart({ trend }) {
   const { colors } = useTheme();
-  const max = Math.max(...SCORE_TREND.map((d) => d.score));
+  const max = Math.max(...trend.map((d) => d.score));
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 140 }}>
-        {SCORE_TREND.map((d, i) => {
-          const isLast = i === SCORE_TREND.length - 1;
+        {trend.map((d, i) => {
+          const isLast = i === trend.length - 1;
           const h = (d.score / max) * 110;
           return (
             <View key={d.label} style={{ flex: 1, alignItems: 'center' }}>
@@ -52,14 +53,27 @@ function MistakeRow({ label, value, total, color }) {
 
 export default function ProgressScreen({ navigation }) {
   const { colors } = useTheme();
-  const { profile } = useApp();
+  const { profile, online } = useApp();
   const [refreshing, setRefreshing] = useState(false);
-  const subjectAcc = { biology: 68, physics: 54, chemistry: 61 };
+  const { data: server, refresh } = useApi('/api/progress', null, [online]);
+
+  // Prefer live analytics once the student has real mock/attempt history;
+  // otherwise show the bundled illustrative data so the screen never feels empty.
+  const hasLive = !!(server?.scoreTrend?.length);
+  const trend = hasLive ? server.scoreTrend : SCORE_TREND;
+  const dna = hasLive && server.mistakeDNA?.total > 1 ? server.mistakeDNA : MISTAKE_DNA;
+  const weakest = server?.weakestChapters?.length ? server.weakestChapters : WEAKEST_CHAPTERS;
+  const rank = hasLive && server.estimatedRank ? server.estimatedRank : STATS.estimatedRank;
+  const subjectAcc = {
+    biology: server?.subjectAccuracy?.biology ?? 68,
+    physics: server?.subjectAccuracy?.physics ?? 54,
+    chemistry: server?.subjectAccuracy?.chemistry ?? 61,
+  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true); Haptic.light();
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    refresh().finally(() => setTimeout(() => setRefreshing(false), 400));
+  }, [refresh]);
 
   return (
     <Screen>
@@ -78,27 +92,27 @@ export default function ProgressScreen({ navigation }) {
         <GreenCard style={{ marginTop: Spacing.lg }}>
           <Eyebrow label="ALL-INDIA RANK" />
           <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 38, letterSpacing: -1.5, marginTop: 4 }}>
-            {STATS.estimatedRank.toLocaleString('en-IN')}
+            {rank.toLocaleString('en-IN')}
           </Text>
           <Txt variant="bodySmall" color={colors.green} style={{ marginTop: 4 }}>
             {STATS.qualifyingColleges.join(' · ')}
           </Txt>
           <Txt variant="caption" color={colors.textSecondary} style={{ marginTop: Spacing.sm }}>
-            ↑ Improved {(STATS.prevRank - STATS.estimatedRank).toLocaleString('en-IN')} places in {STATS.rankImprovedIn}
+            ↑ Improved {Math.max(0, STATS.prevRank - rank).toLocaleString('en-IN')} places in {STATS.rankImprovedIn}
           </Txt>
         </GreenCard>
 
         {/* Score trend */}
         <SectionHeader title="Score trend" style={{ marginTop: Spacing.xl }} />
-        <ScoreTrendChart />
+        <ScoreTrendChart trend={trend} />
 
         {/* Mistake DNA */}
         <SectionHeader title="Mistake DNA" style={{ marginTop: Spacing.xl }} />
         <Card>
-          <MistakeRow label="Concept gaps" value={MISTAKE_DNA.conceptGaps} total={MISTAKE_DNA.total} color={colors.orange} />
-          <MistakeRow label="Silly mistakes" value={MISTAKE_DNA.sillyMistakes} total={MISTAKE_DNA.total} color={colors.purple} />
-          <MistakeRow label="Time pressure" value={MISTAKE_DNA.timePressure} total={MISTAKE_DNA.total} color={colors.blue} />
-          <MistakeRow label="Unattempted" value={MISTAKE_DNA.unattempted} total={MISTAKE_DNA.total} color={colors.textMuted} />
+          <MistakeRow label="Concept gaps" value={dna.conceptGaps} total={dna.total} color={colors.orange} />
+          <MistakeRow label="Silly mistakes" value={dna.sillyMistakes} total={dna.total} color={colors.purple} />
+          <MistakeRow label="Time pressure" value={dna.timePressure} total={dna.total} color={colors.blue} />
+          <MistakeRow label="Unattempted" value={dna.unattempted} total={dna.total} color={colors.textMuted} />
         </Card>
 
         {/* Subject accuracy */}
@@ -113,7 +127,7 @@ export default function ProgressScreen({ navigation }) {
         {/* Weakest chapters */}
         <SectionHeader title="Weakest chapters" style={{ marginTop: Spacing.xl }} />
         <View style={{ gap: Spacing.sm }}>
-          {WEAKEST_CHAPTERS.map((ch) => (
+          {weakest.map((ch) => (
             <TouchableOpacity key={ch.id} activeOpacity={0.85}
               onPress={() => navigation.getParent()?.navigate('Practice', { screen: 'ChapterDetail', params: { chapterId: ch.id } })}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.orangeGlow, borderWidth: 1, borderColor: colors.orange + '30', borderRadius: Radius.md, padding: Spacing.md }}>
