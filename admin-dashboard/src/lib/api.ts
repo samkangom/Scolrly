@@ -17,6 +17,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 export const api = {
   get: <T>(path: string) => call<T>("GET", path),
   post: <T>(path: string, body: unknown) => call<T>("POST", path, body),
+  put: <T>(path: string, body: unknown) => call<T>("PUT", path, body),
   del: <T>(path: string) => call<T>("DELETE", path),
 };
 
@@ -73,6 +74,45 @@ export interface AdminChapter {
   pyqCount: number;
   completeness: number;
 }
+
+export interface AdminConceptCard {
+  id: string;
+  title: string;
+  chapter: string;
+  chapterName: string;
+  subject: string;
+  pyqFreq: string;
+  ncertRef: string;
+  status: "Published" | "Draft";
+  content: string[];
+  formulae: string[];
+  tags: string[];
+}
+
+export interface AdminRoom {
+  id: string;
+  title: string;
+  subject: string;
+  host: string;
+  duration: number;
+  status: "live" | "scheduled";
+  scheduledAt: string | null;
+  totalMembers: number;
+  liveMembers: number;
+}
+
+export interface AdminNotification {
+  id: number;
+  title: string;
+  body: string;
+  target: string;
+  status: "sent" | "scheduled";
+  scheduledAt: string | null;
+  delivered: number;
+  date: string;
+}
+
+export type AdminSettings = Record<string, string>;
 
 export function timeAgo(iso: string): string {
   // SQLite datetimes are UTC without a zone suffix.

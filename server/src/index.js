@@ -502,5 +502,136 @@ app.delete('/api/admin/questions/:id', requireAdmin, (req, res) => {
   res.json({ deleted: info.changes > 0 });
 });
 
+// ── Admin: concept cards ─────────────────────────────────────────────────────
+app.get('/api/admin/concepts', requireAdmin, (_req, res) => {
+  const cards = db.prepare(
+    `SELECT c.*, ch.name chapter_name, ch.subject subject
+     FROM concept_cards c LEFT JOIN chapters ch ON ch.id = c.chapter_id
+     ORDER BY c.title`
+  ).all();
+  res.json({
+    cards: cards.map((c) => ({
+      id: c.id, title: c.title, chapter: c.chapter_id, chapterName: c.chapter_name,
+      subject: c.subject, pyqFreq: c.pyq_freq, ncertRef: c.ncert_ref,
+      status: c.status || 'Published',
+      content: JSON.parse(c.content || '[]'), formulae: JSON.parse(c.formulae || '[]'),
+      tags: JSON.parse(c.tags || '[]'),
+    })),
+  });
+});
+
+app.post('/api/admin/concepts', requireAdmin, (req, res) => {
+  const c = req.body || {};
+  if (!c.title || !c.chapter) return res.status(400).json({ error: 'title and chapter required' });
+  const ch = db.prepare('SELECT 1 FROM chapters WHERE id = ?').get(c.chapter);
+  if (!ch) return res.status(400).json({ error: 'Unknown chapter' });
+  const id = c.id || `card-${Date.now().toString(36)}`;
+  const content = Array.isArray(c.content)
+    ? c.content
+    : String(c.content || '').split('\n').map((s) => s.trim()).filter(Boolean);
+  const formulae = Array.isArray(c.formulae)
+    ? c.formulae
+    : String(c.formulae || '').split(',').map((s) => s.trim()).filter(Boolean);
+  db.prepare(
+    'INSERT INTO concept_cards (id, chapter_id, title, pyq_freq, tags, content, formulae, ncert_ref, status) VALUES (?,?,?,?,?,?,?,?,?)'
+  ).run(id, c.chapter, c.title, c.pyqFreq || 'Medium', JSON.stringify(c.tags || []),
+    JSON.stringify(content), JSON.stringify(formulae), c.ncertRef || '', c.status || 'Published');
+  res.status(201).json({ ok: true, id });
+});
+
+app.put('/api/admin/concepts/:id/status', requireAdmin, (req, res) => {
+  const status = req.body?.status === 'Draft' ? 'Draft' : 'Published';
+  const info = db.prepare('UPDATE concept_cards SET status = ? WHERE id = ?').run(status, req.params.id);
+  res.json({ ok: info.changes > 0, status });
+});
+
+app.delete('/api/admin/concepts/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM bookmarks WHERE card_id = ?').run(req.params.id);
+  const info = db.prepare('DELETE FROM concept_cards WHERE id = ?').run(req.params.id);
+  res.json({ deleted: info.changes > 0 });
+});
+
+// ── Admin: rooms ─────────────────────────────────────────────────────────────
+app.get('/api/admin/rooms', requireAdmin, (_req, res) => {
+  const counts = db.prepare('SELECT room_id, COUNT(*) c FROM room_members GROUP BY room_id')
+    .all().reduce((m, r) => ((m[r.room_id] = r.c), m), {});
+  res.json({
+    rooms: db.prepare('SELECT * FROM rooms').all().map((r) => ({
+      id: r.id, title: r.title, subject: r.subject, host: r.host, duration: r.duration,
+      status: r.status, scheduledAt: r.scheduled_at,
+      totalMembers: r.total_members, liveMembers: counts[r.id] || 0,
+    })),
+  });
+});
+
+app.post('/api/admin/rooms', requireAdmin, (req, res) => {
+  const r = req.body || {};
+  if (!r.title) return res.status(400).json({ error: 'title required' });
+  const id = r.id || `room-${Date.now().toString(36)}`;
+  const status = r.status === 'live' ? 'live' : 'scheduled';
+  db.prepare(
+    'INSERT INTO rooms (id, title, subject, host, duration, status, scheduled_at, total_members) VALUES (?,?,?,?,?,?,?,?)'
+  ).run(id, r.title, r.subject || 'biology', r.host || 'BMI Faculty', r.duration || 45,
+    status, r.scheduledAt || null, r.totalMembers || 0);
+  res.status(201).json({ ok: true, id });
+});
+
+app.delete('/api/admin/rooms/:id', requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM room_members WHERE room_id = ?').run(req.params.id);
+  const info = db.prepare('DELETE FROM rooms WHERE id = ?').run(req.params.id);
+  res.json({ deleted: info.changes > 0 });
+});
+
+// ── Admin: notifications ─────────────────────────────────────────────────────
+// Audience size estimate so "delivered" counts are believable in the pilot.
+function audienceSize(target) {
+  if (target === 'All Users') return db.prepare("SELECT COUNT(*) c FROM users WHERE role='student'").get().c;
+  if (target === 'Class 12') return db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND status='Class 12'").get().c;
+  if (target === 'Class 11') return db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND status='Class 11'").get().c;
+  if (target === 'Droppers') return db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND status='Dropper'").get().c;
+  return db.prepare("SELECT COUNT(*) c FROM users WHERE role='student'").get().c;
+}
+
+app.get('/api/admin/notifications', requireAdmin, (_req, res) => {
+  res.json({
+    notifications: db.prepare('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 50').all()
+      .map((n) => ({
+        id: n.id, title: n.title, body: n.body, target: n.target,
+        status: n.status, scheduledAt: n.scheduled_at, delivered: n.delivered, date: n.created_at,
+      })),
+  });
+});
+
+app.post('/api/admin/notifications', requireAdmin, (req, res) => {
+  const n = req.body || {};
+  if (!n.title || !n.body) return res.status(400).json({ error: 'title and body required' });
+  const scheduled = n.status === 'scheduled';
+  const delivered = scheduled ? 0 : audienceSize(n.target || 'All Users');
+  const info = db.prepare(
+    'INSERT INTO notifications (title, body, target, status, scheduled_at, delivered) VALUES (?,?,?,?,?,?)'
+  ).run(n.title, n.body, n.target || 'All Users', scheduled ? 'scheduled' : 'sent',
+    n.scheduledAt || null, delivered);
+  res.status(201).json({ ok: true, id: info.lastInsertRowid, delivered });
+});
+
+// ── Admin: settings ──────────────────────────────────────────────────────────
+app.get('/api/admin/settings', requireAdmin, (_req, res) => {
+  const rows = db.prepare('SELECT key, value FROM settings').all();
+  res.json({ settings: rows.reduce((m, r) => ((m[r.key] = r.value), m), {}) });
+});
+
+app.put('/api/admin/settings', requireAdmin, (req, res) => {
+  const patch = req.body || {};
+  const upsert = db.prepare(
+    'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+  );
+  const tx = db.transaction((entries) => {
+    for (const [k, v] of entries) upsert.run(k, String(v));
+  });
+  tx(Object.entries(patch));
+  const rows = db.prepare('SELECT key, value FROM settings').all();
+  res.json({ ok: true, settings: rows.reduce((m, r) => ((m[r.key] = r.value), m), {}) });
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Scolrly API listening on :${PORT}`));

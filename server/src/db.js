@@ -135,7 +135,41 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   card_id TEXT NOT NULL REFERENCES concept_cards(id),
   PRIMARY KEY (user_id, card_id)
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  target TEXT DEFAULT 'All Users',
+  status TEXT DEFAULT 'sent',      -- sent | scheduled
+  scheduled_at TEXT,
+  delivered INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
 `);
+
+// Published concept cards carry a status so the app can hide drafts.
+try { db.prepare("ALTER TABLE concept_cards ADD COLUMN status TEXT DEFAULT 'Published'").run(); }
+catch { /* column already exists */ }
+
+// Default admin-configurable settings, inserted once.
+const SETTING_DEFAULTS = {
+  appName: 'Scolrly',
+  supportEmail: 'support@scolrly.com',
+  maintenanceMode: 'false',
+  freeQuestionsPerDay: '5',
+  freeMaxMocks: '1',
+  aiDoubtResolution: 'true',
+  dailyReminderTime: '18:00',
+  weeklyReport: 'true',
+};
+const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
+for (const [k, v] of Object.entries(SETTING_DEFAULTS)) insertSetting.run(k, v);
 
 // Heuristic AIR estimate from a 720-mark score. Anchored so mid-500s land
 // in the tens of thousands, matching the product narrative.
