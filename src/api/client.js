@@ -75,4 +75,22 @@ export const api = {
     }
     return null;
   },
+
+  // Email auth. Returns { user } on success, or { error } on failure/offline.
+  async register(email, password, name) {
+    const res = await request('POST', '/api/auth/register', { email, password, name }, { auth: false });
+    return this._afterAuth(res, 'Could not create account. Try a different email.');
+  },
+  async login(email, password) {
+    const res = await request('POST', '/api/auth/login', { email, password }, { auth: false });
+    return this._afterAuth(res, 'Wrong email or password (or server offline).');
+  },
+  async _afterAuth(res, failMsg) {
+    if (res?.token) {
+      token = res.token;
+      await AsyncStorage.setItem(TOKEN_KEY, token);
+      return { user: res.user };
+    }
+    return { error: failMsg };
+  },
 };

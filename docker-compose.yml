@@ -1,0 +1,36 @@
+# Runs the full Scolrly backend: API server + admin dashboard.
+# The mobile app (Expo) runs separately — point it at the API with
+# EXPO_PUBLIC_API_URL. See README.md.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-prod}
+      - ADMIN_KEY=${ADMIN_KEY:-scolrly-admin-dev}
+      # Optional — enables Claude-powered Doubt Drop when set.
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - scolrly-data:/data
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./admin-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - SCOLRLY_API_URL=http://api:4000
+      - SCOLRLY_ADMIN_KEY=${ADMIN_KEY:-scolrly-admin-dev}
+      - DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-bmi-admin}
+      - DASHBOARD_COOKIE=${DASHBOARD_COOKIE:-bmi-authenticated}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  scolrly-data:

@@ -6,6 +6,7 @@ import {
   hashPassword, verifyPassword, signToken, publicUser,
   requireAuth, requireAdmin, touchStreak,
 } from './auth.js';
+import { askClaude, aiEnabled } from './ai.js';
 
 seed();
 
@@ -25,7 +26,8 @@ const parseCard = (row) => ({
   formulae: JSON.parse(row.formulae || '[]'), ncertRef: row.ncert_ref,
 });
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'scolrly-api' }));
+app.get('/api/health', (_req, res) =>
+  res.json({ ok: true, service: 'scolrly-api', aiDoubts: aiEnabled() }));
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 // Frictionless mobile session: identify by device, create user on first call.
@@ -242,6 +244,31 @@ app.get('/api/mocks', requireAuth, (req, res) => {
   });
 });
 
+// A timed paper for a mock: every question in the bank (subject-filtered for
+// subject mocks), shuffled deterministically per user+mock so a retake sees
+// the same paper. NEET marking: +4 correct, −1 wrong, 0 unattempted.
+app.get('/api/mocks/:id/paper', requireAuth, (req, res) => {
+  const mock = db.prepare('SELECT * FROM mocks WHERE id = ?').get(req.params.id);
+  if (!mock) return res.status(404).json({ error: 'Unknown mock' });
+  let rows = db.prepare('SELECT * FROM questions').all();
+  if (mock.type !== 'full') rows = rows.filter((q) => q.subject === mock.type);
+  // Deterministic shuffle keyed on user+mock.
+  const key = `${req.user.id}:${mock.id}`;
+  let h = 0;
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const shuffled = rows
+    .map((q, i) => ({ q, k: (h ^ (i * 2654435761)) >>> 0 }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.q);
+  res.json({
+    mock: {
+      id: mock.id, title: mock.title, duration: mock.duration,
+      totalMarks: mock.total_marks, marking: { correct: 4, wrong: -1, unattempted: 0 },
+    },
+    questions: shuffled.map(parseQ),
+  });
+});
+
 app.post('/api/mocks/:id/submit', requireAuth, (req, res) => {
   const mock = db.prepare('SELECT * FROM mocks WHERE id = ?').get(req.params.id);
   if (!mock) return res.status(404).json({ error: 'Unknown mock' });
@@ -286,12 +313,14 @@ function answerDoubt(question, subject) {
   };
 }
 
-app.post('/api/doubts', requireAuth, (req, res) => {
+app.post('/api/doubts', requireAuth, async (req, res) => {
   const { question, subject } = req.body || {};
   if (!question || question.trim().length < 5) {
     return res.status(400).json({ error: 'question required (min 5 chars)' });
   }
-  const { answer, ncertRef } = answerDoubt(question, (subject || 'all').toLowerCase());
+  // Claude first (when configured), retrieval matcher as the offline fallback.
+  const ai = await askClaude(question.trim(), (subject || 'all').toLowerCase());
+  const { answer, ncertRef } = ai || answerDoubt(question, (subject || 'all').toLowerCase());
   const info = db.prepare(
     'INSERT INTO doubts (user_id, question, subject, answer, ncert_ref) VALUES (?,?,?,?,?)'
   ).run(req.user.id, question.trim(), (subject || 'all').toLowerCase(), answer, ncertRef);

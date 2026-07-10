@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { View, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme';
 import { Spacing, Radius, Typography } from '../theme/tokens';
@@ -6,9 +6,16 @@ import {
   Screen, Txt, Eyebrow, Card, GreenCard, Btn, IconBox, StepDots,
   OptionSelector, ProgressBar, Badge, SubjectRow, StatPill,
 } from '../components/common';
+import { TextInput } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { QUESTIONS } from '../data';
 import { Haptic } from '../utils/haptics';
+import { api } from '../api/client';
+
+const fmtClock = (secs) => {
+  const s = Math.max(0, secs);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 // Logo block reused across onboarding.
 function Logo({ size = 80 }) {
@@ -54,7 +61,7 @@ export function OnboardWelcome({ navigation }) {
         <View style={{ flex: 1 }} />
         <View style={{ marginTop: Spacing.xxxl }}>
           <Btn label="Get started — it's free" onPress={() => navigation.navigate('OnboardProfile')} />
-          <TouchableOpacity onPress={() => navigation.navigate('OnboardProfile')} style={{ alignItems: 'center', marginTop: Spacing.lg }}>
+          <TouchableOpacity onPress={() => navigation.navigate('OnboardSignIn')} style={{ alignItems: 'center', marginTop: Spacing.lg }}>
             <Text style={[Typography.body, { color: colors.textSecondary }]}>
               Already have an account? <Text style={{ color: colors.green, fontFamily: 'Inter_700Bold', fontWeight: '700' }}>Sign in</Text>
             </Text>
@@ -140,34 +147,96 @@ export function OnboardBrainIntro({ navigation, route }) {
   );
 }
 
-// ── Screen 4: Brain Scan active flow ─────────────────────────────────────────
+// ── Screen 4: Brain Scan active flow (adaptive + real scoring) ───────────────
+const DIFF_ORDER = { Easy: 0, Medium: 1, Hard: 2 };
+const LEVELS = ['Easy', 'Medium', 'Hard'];
+
 export function OnboardBrainScan({ navigation, route }) {
   const { colors } = useTheme();
   const profile = route.params?.profile;
-  const quiz = useMemo(() => QUESTIONS.slice(0, 6), []);
+
+  // Bucket the bank by difficulty so we can ramp adaptively.
+  const buckets = useMemo(() => {
+    const b = { Easy: [], Medium: [], Hard: [] };
+    for (const q of QUESTIONS) (b[q.difficulty] || b.Medium).push(q);
+    return b;
+  }, []);
+  const quizLen = Math.min(8, QUESTIONS.length);
+
+  const [level, setLevel] = useState(1); // start at Medium
+  const [seen, setSeen] = useState([]);  // question ids already served
+  const [current, setCurrent] = useState(null);
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState(null);
   const [answered, setAnswered] = useState(0);
+  const stats = useRef({ correct: 0, bySubject: { biology: { c: 0, n: 0 }, physics: { c: 0, n: 0 }, chemistry: { c: 0, n: 0 } } });
 
-  const q = quiz[idx];
-  const total = 30;
+  // Real 20-minute countdown; auto-finishes at 0.
+  const [remaining, setRemaining] = useState(20 * 60);
+
+  const pickAt = useCallback((lvl, seenIds) => {
+    // Nearest-level unseen question, widening outward if a bucket is empty.
+    for (let d = 0; d < 3; d++) {
+      for (const dir of [0, -1, 1]) {
+        const L = LEVELS[Math.min(2, Math.max(0, lvl + d * dir))];
+        const cand = buckets[L].find((q) => !seenIds.includes(q.id));
+        if (cand) return cand;
+      }
+    }
+    return QUESTIONS.find((q) => !seenIds.includes(q.id)) || null;
+  }, [buckets]);
+
+  useEffect(() => {
+    if (!current) setCurrent(pickAt(1, []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const q = current;
+  const total = 30;               // maps our pilot pool onto the "30-question" chrome
   const shownQ = idx + 1;
 
+  const finish = useCallback(() => {
+    const s = stats.current;
+    const acc = (k) => (s.bySubject[k].n ? Math.round((s.bySubject[k].c / s.bySubject[k].n) * 100) : null);
+    const perSubject = { biology: acc('biology'), physics: acc('physics'), chemistry: acc('chemistry') };
+    const answeredN = s.bySubject.biology.n + s.bySubject.physics.n + s.bySubject.chemistry.n;
+    const overall = answeredN ? Math.round((s.correct / answeredN) * 100) : 0;
+    navigation.navigate('OnboardResult', { profile, scan: { perSubject, overall, answered: answeredN } });
+  }, [navigation, profile]);
+
+  useEffect(() => {
+    if (remaining <= 0) { finish(); return undefined; }
+    const t = setInterval(() => setRemaining((r) => r - 1), 1000);
+    return () => clearInterval(t);
+  }, [remaining, finish]);
+
   const choose = (id) => {
-    if (picked) return;
+    if (picked || !q) return;
     setPicked(id);
     setAnswered((a) => a + 1);
-    if (id === q.correct) Haptic.success(); else Haptic.error();
+    const ok = id === q.correct;
+    const bucket = stats.current.bySubject[q.subject] || stats.current.bySubject.biology;
+    bucket.n += 1;
+    if (ok) { bucket.c += 1; stats.current.correct += 1; setLevel((l) => Math.min(2, l + 1)); Haptic.success(); }
+    else { setLevel((l) => Math.max(0, l - 1)); Haptic.error(); }
   };
 
   const next = () => {
-    if (idx + 1 >= quiz.length) {
-      navigation.navigate('OnboardResult', { profile });
-    } else {
-      setIdx((i) => i + 1);
-      setPicked(null);
-    }
+    if (idx + 1 >= quizLen) { finish(); return; }
+    const nextSeen = [...seen, q.id];
+    const nextQ = pickAt(level, nextSeen);
+    if (!nextQ) { finish(); return; }
+    setSeen(nextSeen);
+    setCurrent(nextQ);
+    setIdx((i) => i + 1);
+    setPicked(null);
   };
+
+  if (!q) {
+    return (
+      <Screen><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 40 }}>🧠</Text></View></Screen>
+    );
+  }
 
   const optionStyle = (id) => {
     if (!picked) return { bg: colors.bgCard, border: colors.border, circle: colors.bgCard2, letter: colors.textMuted, text: colors.textSecondary };
@@ -181,8 +250,8 @@ export function OnboardBrainScan({ navigation, route }) {
       <View style={{ flex: 1, padding: Spacing.xl }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.md }}>
           <Txt variant="bodySmall" color={colors.textMuted}>Brain Scan · Q {shownQ} of {total}</Txt>
-          <View style={{ backgroundColor: colors.greenGlow, borderRadius: Radius.pill, paddingHorizontal: Spacing.md, paddingVertical: 5 }}>
-            <Text style={{ color: colors.green, fontFamily: 'Inter_800ExtraBold', fontWeight: '800', fontSize: 13 }}>8:32</Text>
+          <View style={{ backgroundColor: remaining < 60 ? colors.orangeGlow : colors.greenGlow, borderRadius: Radius.pill, paddingHorizontal: Spacing.md, paddingVertical: 5 }}>
+            <Text style={{ color: remaining < 60 ? colors.orange : colors.green, fontFamily: 'Inter_800ExtraBold', fontWeight: '800', fontSize: 13 }}>{fmtClock(remaining)}</Text>
           </View>
         </View>
 
@@ -243,15 +312,35 @@ export function OnboardResult({ navigation, route }) {
   const { colors } = useTheme();
   const { completeOnboarding } = useApp();
   const profile = route.params?.profile;
+  const scan = route.params?.scan; // present when the scan was actually taken
 
-  const breakdown = [
-    { name: 'Mechanics', value: 72 },
-    { name: 'Optics', value: 58 },
-    { name: 'Thermodynamics', value: 38 },
-    { name: 'Organic Chem', value: 45 },
-    { name: 'Genetics', value: 81 },
-    { name: 'Physiology', value: 31 },
-  ];
+  // Real per-subject breakdown when we have scan data; illustrative otherwise.
+  const breakdown = scan
+    ? [
+        { name: 'Biology', value: scan.perSubject.biology },
+        { name: 'Physics', value: scan.perSubject.physics },
+        { name: 'Chemistry', value: scan.perSubject.chemistry },
+      ].filter((r) => r.value != null)
+    : [
+        { name: 'Mechanics', value: 72 },
+        { name: 'Optics', value: 58 },
+        { name: 'Thermodynamics', value: 38 },
+        { name: 'Organic Chem', value: 45 },
+        { name: 'Genetics', value: 81 },
+        { name: 'Physiology', value: 31 },
+      ];
+
+  // Estimated rank from overall accuracy (same heuristic family as mocks).
+  const overall = scan ? scan.overall : 42;
+  const estScore = Math.round((overall / 100) * 720);
+  const estRank = Math.max(1, Math.round(1150000 * Math.pow(1 - estScore / 720, 2.45)));
+  const rankLabel = scan
+    ? `AIR ~${estRank.toLocaleString('en-IN')}`
+    : 'AIR ~65,000';
+
+  const critical = breakdown.filter((r) => r.value < 55).length;
+  const needsWork = breakdown.filter((r) => r.value >= 55 && r.value < 75).length;
+  const strong = breakdown.filter((r) => r.value >= 75).length;
 
   const finish = async () => {
     Haptic.success();
@@ -265,21 +354,23 @@ export function OnboardResult({ navigation, route }) {
           <Eyebrow label="BRAIN SCAN COMPLETE" />
           <Txt variant="h2" style={{ marginTop: 6 }}>Your Brain Map</Txt>
           <Txt variant="bodySmall" color={colors.textMuted} style={{ marginTop: 4 }}>Estimated rank based on today</Txt>
-          <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 42, letterSpacing: -2, marginTop: Spacing.md }}>AIR ~65,000</Text>
+          <Text style={{ color: colors.green, fontFamily: 'Inter_900Black', fontWeight: '900', fontSize: 42, letterSpacing: -2, marginTop: Spacing.md }}>{rankLabel}</Text>
           <Txt variant="bodySmall" color={colors.textSecondary} style={{ marginTop: 4 }}>Scolrly will get you to top 10,000</Txt>
         </View>
 
         <GreenCard style={{ marginTop: Spacing.xl }}>
-          <Txt variant="h4" style={{ marginBottom: Spacing.md }}>Chapter accuracy breakdown</Txt>
+          <Txt variant="h4" style={{ marginBottom: Spacing.md }}>
+            {scan ? 'Subject accuracy breakdown' : 'Chapter accuracy breakdown'}
+          </Txt>
           {breakdown.map((c) => (
             <SubjectRow key={c.name} name={c.name} value={c.value} />
           ))}
         </GreenCard>
 
         <View style={{ flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.lg }}>
-          <StatPill value="3" label="Critical gaps" color="orange" />
-          <StatPill value="2" label="Needs work" color="yellow" />
-          <StatPill value="2" label="Strong" color="green" />
+          <StatPill value={String(critical)} label="Critical gaps" color="orange" />
+          <StatPill value={String(needsWork)} label="Needs work" color="yellow" />
+          <StatPill value={String(strong)} label="Strong" color="green" />
         </View>
 
         <View style={{ marginTop: Spacing.xxxl, gap: Spacing.md }}>
@@ -288,6 +379,92 @@ export function OnboardResult({ navigation, route }) {
             <Text style={[Typography.h5, { color: colors.green }]}>Share my Brain Map</Text>
           </TouchableOpacity>
         </View>
+      </ScrollView>
+    </Screen>
+  );
+}
+
+// ── Sign in / create account (email auth) ────────────────────────────────────
+export function OnboardSignIn({ navigation }) {
+  const { colors } = useTheme();
+  const { completeOnboarding } = useApp();
+  const [mode, setMode] = useState('signin'); // signin | register
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  const submit = async () => {
+    setError(null);
+    if (!email.includes('@') || password.length < 6) {
+      setError('Enter a valid email and a password of at least 6 characters.');
+      return;
+    }
+    setBusy(true);
+    Haptic.light();
+    const res = mode === 'register'
+      ? await api.register(email.trim(), password, name.trim() || email.split('@')[0])
+      : await api.login(email.trim(), password);
+    setBusy(false);
+    if (res.error) { setError(res.error); Haptic.error(); return; }
+    Haptic.success();
+    const u = res.user || {};
+    await completeOnboarding({
+      name: u.name, initials: u.initials, targetYear: u.targetYear,
+      status: u.status, coaching: u.coaching, medium: u.medium,
+    });
+  };
+
+  const field = {
+    backgroundColor: colors.bgCard2, borderRadius: Radius.sm, borderWidth: 0.5,
+    borderColor: colors.border, paddingHorizontal: Spacing.md, height: 48,
+    color: colors.textPrimary, fontFamily: 'Inter_400Regular', fontSize: 14,
+  };
+
+  return (
+    <Screen>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: Spacing.xl, paddingTop: Spacing.xxxl }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={8}>
+          <Text style={[Typography.h5, { color: colors.green }]}>← Back</Text>
+        </TouchableOpacity>
+
+        <Eyebrow label={mode === 'register' ? 'CREATE ACCOUNT' : 'WELCOME BACK'} style={{ marginTop: Spacing.xl }} />
+        <Txt variant="h1" style={{ marginTop: 6 }}>{mode === 'register' ? 'Join Scolrly' : 'Sign in'}</Txt>
+        <Txt variant="body" color={colors.textSecondary} style={{ marginTop: 6, marginBottom: Spacing.xl }}>
+          {mode === 'register' ? 'Your progress syncs across devices.' : 'Pick up exactly where you left off.'}
+        </Txt>
+
+        <View style={{ gap: Spacing.md }}>
+          {mode === 'register' ? (
+            <TextInput value={name} onChangeText={setName} placeholder="Full name"
+              placeholderTextColor={colors.textMuted} style={field} />
+          ) : null}
+          <TextInput value={email} onChangeText={setEmail} placeholder="Email"
+            autoCapitalize="none" keyboardType="email-address"
+            placeholderTextColor={colors.textMuted} style={field} />
+          <TextInput value={password} onChangeText={setPassword} placeholder="Password (min 6 chars)"
+            secureTextEntry placeholderTextColor={colors.textMuted} style={field} />
+        </View>
+
+        {error ? (
+          <View style={{ marginTop: Spacing.md, backgroundColor: colors.orangeGlow, borderRadius: Radius.sm, borderWidth: 1, borderColor: colors.orange + '40', padding: Spacing.md }}>
+            <Txt variant="bodySmall" color={colors.orange}>{error}</Txt>
+          </View>
+        ) : null}
+
+        <View style={{ marginTop: Spacing.xl }}>
+          <Btn label={busy ? 'Please wait…' : (mode === 'register' ? 'Create account' : 'Sign in')} onPress={submit} disabled={busy} />
+        </View>
+
+        <TouchableOpacity onPress={() => { setMode(mode === 'register' ? 'signin' : 'register'); setError(null); }} style={{ alignItems: 'center', marginTop: Spacing.lg }}>
+          <Text style={[Typography.body, { color: colors.textSecondary }]}>
+            {mode === 'register' ? 'Already have an account? ' : "New here? "}
+            <Text style={{ color: colors.green, fontFamily: 'Inter_700Bold', fontWeight: '700' }}>
+              {mode === 'register' ? 'Sign in' : 'Create one'}
+            </Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </Screen>
   );

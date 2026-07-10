@@ -39,7 +39,7 @@ export default function MockScreen({ navigation }) {
         <SectionHeader title="Ready to take" />
         {pending.map((m) => (
           <MockCard key={m.id} mock={m} style={{ marginBottom: Spacing.sm }}
-            onStart={() => navigation.navigate('QuestionSession', { chapterId: null, mode: 'mock' })} />
+            onStart={() => navigation.navigate('QuestionSession', { chapterId: null, mode: 'mock', mockId: m.id })} />
         ))}
 
         <SectionHeader title="Completed mocks" style={{ marginTop: Spacing.xl }} />
@@ -54,7 +54,7 @@ export default function MockScreen({ navigation }) {
         <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
           {SUBJECT_MOCKS.map((sm) => (
             <TouchableOpacity key={sm.id} activeOpacity={0.85} style={{ flex: 1 }}
-              onPress={() => navigation.navigate('QuestionSession', { chapterId: null, mode: 'mock' })}>
+              onPress={() => navigation.navigate('QuestionSession', { chapterId: null, mode: 'mock', mockId: sm.id })}>
               <View style={{ backgroundColor: subjColor(sm.subject) + '20', borderWidth: 1, borderColor: subjColor(sm.subject) + '30', borderRadius: Radius.md, padding: Spacing.md, alignItems: 'center' }}>
                 <Txt variant="h5" color={subjColor(sm.subject)}>{sm.title}</Txt>
                 <Txt variant="caption" color={colors.textMuted} style={{ marginTop: 4, textAlign: 'center' }}>{sm.questions}Q · {sm.duration}m</Txt>

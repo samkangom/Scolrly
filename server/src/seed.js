@@ -1,7 +1,7 @@
 // Seeds the SQLite DB from the mobile app's data module (single source of truth).
 import { db } from './db.js';
 import {
-  CHAPTERS, QUESTIONS, CONCEPT_CARDS, MOCK_TESTS, STUDY_ROOMS, LEADERBOARD,
+  CHAPTERS, QUESTIONS, CONCEPT_CARDS, MOCK_TESTS, SUBJECT_MOCKS, STUDY_ROOMS, LEADERBOARD,
 } from '../../src/data/index.js';
 
 export function seed() {
@@ -34,6 +34,8 @@ export function seed() {
       'INSERT INTO mocks (id, type, title, duration, total_marks, question_count) VALUES (?,?,?,?,?,?)'
     );
     for (const m of MOCK_TESTS) insM.run(m.id, m.type, m.title, m.duration, m.totalMarks, m.questions);
+    // Subject mocks — type is the subject so /paper filters to it.
+    for (const sm of SUBJECT_MOCKS) insM.run(sm.id, sm.subject, sm.title, sm.duration, sm.questions * 4, sm.questions);
 
     const insR = db.prepare(
       'INSERT INTO rooms (id, title, subject, host, duration, status, scheduled_at, total_members) VALUES (?,?,?,?,?,?,?,?)'

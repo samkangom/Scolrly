@@ -6,6 +6,7 @@ import {
   OnboardBrainIntro,
   OnboardBrainScan,
   OnboardResult,
+  OnboardSignIn,
 } from '../screens/OnboardingScreens';
 
 const Stack = createNativeStackNavigator();
@@ -18,6 +19,7 @@ export default function OnboardingNavigator() {
       <Stack.Screen name="OnboardBrainIntro" component={OnboardBrainIntro} />
       <Stack.Screen name="OnboardBrainScan" component={OnboardBrainScan} />
       <Stack.Screen name="OnboardResult" component={OnboardResult} />
+      <Stack.Screen name="OnboardSignIn" component={OnboardSignIn} />
     </Stack.Navigator>
   );
 }
